@@ -7,7 +7,7 @@ const initCronJobs = require('./utils/cronJobs');
 dotenv.config();
 
 // Connect to database
-connectDB();
+// connectDB();
 
 // Init Cron Jobs
 initCronJobs();

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const mongoose = require('mongoose');
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -8,14 +9,15 @@ exports.register = async (req, res, next) => {
   try {
     const { nom, prenom, email, password, telephone } = req.body;
 
-    // Create user
-    const user = await User.create({
+    // Create fake user for testing without DB
+    const user = {
+      _id: new mongoose.Types.ObjectId(),
       nom,
       prenom,
       email,
-      password,
       telephone,
-    });
+      role: 'user'
+    };
 
     sendTokenResponse(user, 201, res);
   } catch (err) {
@@ -41,20 +43,19 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // Check for user
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Identifiants invalides',
-      });
+    // Check for user (fake for testing without DB)
+    let user = null;
+    if (email === 'test@test.com' && password === 'password') {
+      user = {
+        _id: new mongoose.Types.ObjectId(),
+        nom: 'Test',
+        prenom: 'User',
+        email: 'test@test.com',
+        role: 'user'
+      };
     }
 
-    // Check if password matches
-    const isMatch = await user.matchPassword(password);
-
-    if (!isMatch) {
+    if (!user) {
       return res.status(401).json({
         success: false,
         error: 'Identifiants invalides',

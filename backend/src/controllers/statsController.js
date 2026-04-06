@@ -22,6 +22,25 @@ exports.getStats = async (req, res) => {
         statut: 'en cours'
     });
 
+    // Données pour le graphique (6 derniers mois)
+    const chartData = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = d.toLocaleString('fr-FR', { month: 'short' });
+      
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+
+      const monthlyPayments = await Payment.find({
+        statut: 'validated',
+        dateValidation: { $gte: startOfMonth, $lte: endOfMonth }
+      });
+
+      const total = monthlyPayments.reduce((acc, p) => acc + p.montant, 0);
+      chartData.push({ name: monthName, montant: total });
+    }
+
     res.json({
       success: true,
       data: {
@@ -29,7 +48,8 @@ exports.getStats = async (req, res) => {
         totalTontines,
         totalMontant,
         pendingPayments,
-        activeTontines
+        activeTontines,
+        chartData
       }
     });
   } catch (error) {
