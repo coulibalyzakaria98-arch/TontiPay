@@ -40,7 +40,6 @@ const AdminStats = () => {
 
   return (
     <div className="space-y-8 mb-10">
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, idx) => (
           <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 transition-transform hover:scale-[1.02]">
@@ -55,7 +54,6 @@ const AdminStats = () => {
         ))}
       </div>
 
-      {/* Chart Section */}
       <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-indigo-100/20 border border-gray-100">
         <div className="flex items-center justify-between mb-8">
           <div>

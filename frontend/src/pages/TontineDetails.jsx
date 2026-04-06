@@ -56,7 +56,6 @@ const TontineDetails = () => {
           Tableau de bord
         </button>
 
-        {/* Header Section */}
         <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 overflow-hidden mb-8">
           <div className="bg-indigo-600 p-8 text-white md:flex justify-between items-center">
             <div className="mb-6 md:mb-0">
@@ -107,7 +106,6 @@ const TontineDetails = () => {
           </div>
         </div>
 
-        {/* Members List Section */}
         <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-gray-100 overflow-hidden">
           <div className="p-8 border-b border-gray-50 flex justify-between items-center">
             <h2 className="text-2xl font-black flex items-center">
