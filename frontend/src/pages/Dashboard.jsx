@@ -6,7 +6,8 @@ import { PlusCircle, LogIn, Users, Bell, History, ShieldCheck } from 'lucide-rea
 import AdminStats from '../components/AdminStats';
 
 const Dashboard = () => {
-...
+  const { user, logout } = useAuth();
+  const [tontines, setTontines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -20,7 +21,17 @@ const Dashboard = () => {
         setTontines(tontinesRes.data.data);
         setUnreadCount(notificationsRes.data.data.filter(n => !n.read).length);
       } catch (err) {
-...
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -47,7 +58,6 @@ const Dashboard = () => {
               <span className="text-gray-600 hidden md:block">
                 Salut, <span className="font-semibold">{user?.prenom}</span>
               </span>
-...
               <button
                 onClick={logout}
                 className="text-gray-500 hover:text-red-600 transition-colors text-sm font-medium"
