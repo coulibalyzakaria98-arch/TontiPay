@@ -1,4 +1,5 @@
 const Payment = require('../models/Payment');
+const Notification = require('../models/Notification');
 
 // @desc    Create a new payment
 // @route   POST /api/payments
@@ -12,7 +13,7 @@ exports.createPayment = async (req, res) => {
       tontine: tontineId,
       montant,
       reference,
-      preuve: preuve || null, // For now text, later from file upload
+      preuve: preuve || null,
     });
 
     res.status(201).json({
@@ -21,87 +22,86 @@ exports.createPayment = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      const Payment = require('../models/Payment');
-      const Notification = require('../models/Notification');
+      success: false,
+      error: error.message,
+    });
+  }
+};
 
-      // @desc    Create a new payment
-      // @route   POST /api/payments
-      ...
-      // @desc    Validate a payment (Admin)
-      // @route   PUT /api/payments/:id/validate
-      // @access  Private/Admin
-      exports.validatePayment = async (req, res) => {
-        try {
-          const payment = await Payment.findById(req.params.id).populate('tontine', 'nom');
+// @desc    Validate a payment (Admin)
+// @route   PUT /api/payments/:id/validate
+// @access  Private/Admin
+exports.validatePayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id).populate('tontine', 'nom');
 
-          if (!payment) {
-            return res.status(404).json({ success: false, error: 'Paiement non trouvé' });
-          }
+    if (!payment) {
+      return res.status(404).json({ success: false, error: 'Paiement non trouvé' });
+    }
 
-          payment.statut = 'validated';
-          payment.dateValidation = new Date();
+    payment.statut = 'validated';
+    payment.dateValidation = new Date();
 
-          await payment.save();
+    await payment.save();
 
-          // Create Notification
-          await Notification.create({
-            user: payment.user,
-            message: `Votre paiement de ${payment.montant} FCFA pour la tontine "${payment.tontine.nom}" a été validé.`,
-            type: 'payment_validated'
-          });
+    // Create Notification
+    await Notification.create({
+      user: payment.user,
+      message: `Votre paiement de ${payment.montant} FCFA pour la tontine "${payment.tontine.nom}" a été validé.`,
+      type: 'payment_validated'
+    });
 
-          res.json({ success: true, data: payment });
-        } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
-        }
-      };
+    res.json({ success: true, data: payment });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
-      // @desc    Reject a payment (Admin)
-      // @route   PUT /api/payments/:id/reject
-      // @access  Private/Admin
-      exports.rejectPayment = async (req, res) => {
-        try {
-          const payment = await Payment.findById(req.params.id).populate('tontine', 'nom');
+// @desc    Reject a payment (Admin)
+// @route   PUT /api/payments/:id/reject
+// @access  Private/Admin
+exports.rejectPayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id).populate('tontine', 'nom');
 
-          if (!payment) {
-            return res.status(404).json({ success: false, error: 'Paiement non trouvé' });
-          }
+    if (!payment) {
+      return res.status(404).json({ success: false, error: 'Paiement non trouvé' });
+    }
 
-          payment.statut = 'rejected';
-          payment.dateValidation = new Date();
+    payment.statut = 'rejected';
+    payment.dateValidation = new Date();
 
-          await payment.save();
+    await payment.save();
 
-          // Create Notification
-          await Notification.create({
-            user: payment.user,
-            message: `Votre paiement de ${payment.montant} FCFA pour la tontine "${payment.tontine.nom}" a été refusé.`,
-            type: 'payment_rejected'
-          });
+    // Create Notification
+    await Notification.create({
+      user: payment.user,
+      message: `Votre paiement de ${payment.montant} FCFA pour la tontine "${payment.tontine.nom}" a été refusé.`,
+      type: 'payment_rejected'
+    });
 
-          res.json({ success: true, data: payment });
-        } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
-        }
-      };
+    res.json({ success: true, data: payment });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
-      // @desc    Get payments for a specific tontine
-      // @route   GET /api/payments/tontine/:tontineId
-      // @access  Private
-      exports.getTontinePayments = async (req, res) => {
-        try {
-          const payments = await Payment.find({ tontine: req.params.tontineId })
-            .populate('user', 'nom prenom')
-            .sort('-datePaiement');
+// @desc    Get payments for a specific tontine
+// @route   GET /api/payments/tontine/:tontineId
+// @access  Private
+exports.getTontinePayments = async (req, res) => {
+  try {
+    const payments = await Payment.find({ tontine: req.params.tontineId })
+      .populate('user', 'nom prenom')
+      .sort('-datePaiement');
 
-          res.json({ success: true, data: payments });
-        } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
-        }
-      };
+    res.json({ success: true, data: payments });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
-      // @desc    Get current user's payments
-      ...
+// @desc    Get current user's payments
 // @route   GET /api/payments/my-payments
 // @access  Private
 exports.getMyPayments = async (req, res) => {
