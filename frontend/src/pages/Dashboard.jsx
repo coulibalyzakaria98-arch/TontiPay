@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { PlusCircle, LogIn, Users, Bell, History, ShieldCheck, Landmark, Calendar } from 'lucide-react';
+import { PlusCircle, LogIn, Users, Bell, History, ShieldCheck, Landmark, Calendar, Loader2 } from 'lucide-react';
 import AdminStats from '../components/AdminStats';
 
 const Dashboard = () => {
@@ -77,7 +77,7 @@ const Dashboard = () => {
         {/* Admin Stats Header */}
         {user?.role === 'admin' && <AdminStats />}
 
-        {/* User Summary Stats (Modern Cards) */}
+        {/* User Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
             <div className="bg-indigo-50 p-3 rounded-xl">
@@ -136,7 +136,7 @@ const Dashboard = () => {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+            <Loader2 className="animate-spin h-10 w-10 text-indigo-600" />
           </div>
         ) : tontines.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
