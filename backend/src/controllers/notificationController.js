@@ -1,17 +1,23 @@
 const Notification = require('../models/Notification');
 
-// @desc    Get user notifications
+// @desc    Get all notifications for logged in user
 // @route   GET /api/notifications
 // @access  Private
-exports.getNotifications = async (req, res) => {
+exports.getMyNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ user: req.user.id })
       .sort('-createdAt')
-      .limit(50);
+      .limit(20);
 
-    res.json({ success: true, data: notifications });
+    res.status(200).json({
+      success: true,
+      data: notifications,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
@@ -33,20 +39,36 @@ exports.markAsRead = async (req, res) => {
     notification.read = true;
     await notification.save();
 
-    res.json({ success: true, data: notification });
+    res.status(200).json({
+      success: true,
+      data: notification,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
 // @desc    Mark all notifications as read
 // @route   PUT /api/notifications/read-all
 // @access  Private
-exports.markAllRead = async (req, res) => {
+exports.markAllAsRead = async (req, res) => {
   try {
-    await Notification.updateMany({ user: req.user.id, read: false }, { read: true });
-    res.json({ success: true });
+    await Notification.updateMany(
+      { user: req.user.id, read: false },
+      { read: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Toutes les notifications ont été marquées comme lues',
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
