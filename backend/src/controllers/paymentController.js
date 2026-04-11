@@ -10,7 +10,6 @@ exports.createPayment = async (req, res) => {
   try {
     const { tontineId, montant, reference, preuve, moyenPaiement } = req.body;
 
-    // Get current tour of the tontine
     const tontine = await Tontine.findById(tontineId);
     if (!tontine) {
       return res.status(404).json({ success: false, error: 'Tontine non trouvée' });
@@ -31,36 +30,40 @@ exports.createPayment = async (req, res) => {
       data: payment,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// @desc    Validate a payment (Admin)
+// @desc    Validate a payment (Only Tontine Creator)
 // @route   PUT /api/payments/:id/validate
-// @access  Private/Admin
+// @access  Private
 exports.validatePayment = async (req, res) => {
   try {
-    const payment = await Payment.findById(req.params.id).populate('tontine', 'nom');
+    const payment = await Payment.findById(req.params.id).populate('tontine');
 
     if (!payment) {
       return res.status(404).json({ success: false, error: 'Paiement non trouvé' });
     }
 
+    // AUTH CHECK: Is the requester the creator of the tontine?
+    if (payment.tontine.createur.toString() !== req.user.id) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Seul l\'administrateur (créateur) de cette tontine peut valider les paiements' 
+      });
+    }
+
     payment.statut = 'validated';
     payment.dateValidation = new Date();
-
     await payment.save();
 
     // Check if tontine should move to next round
     await checkAndAdvanceRound(payment.tontine._id);
 
-    // Create Notification
+    // Create Notification for the payer
     await Notification.create({
       user: payment.user,
-      message: `Votre paiement de ${payment.montant} FCFA pour la tontine "${payment.tontine.nom}" a été validé.`,
+      message: `✅ Votre paiement de ${payment.montant.toLocaleString()} FCFA pour "${payment.tontine.nom}" a été validé par l'administrateur.`,
       type: 'payment_validated'
     });
 
@@ -70,26 +73,33 @@ exports.validatePayment = async (req, res) => {
   }
 };
 
-// @desc    Reject a payment (Admin)
+// @desc    Reject a payment (Only Tontine Creator)
 // @route   PUT /api/payments/:id/reject
-// @access  Private/Admin
+// @access  Private
 exports.rejectPayment = async (req, res) => {
   try {
-    const payment = await Payment.findById(req.params.id).populate('tontine', 'nom');
+    const payment = await Payment.findById(req.params.id).populate('tontine');
 
     if (!payment) {
       return res.status(404).json({ success: false, error: 'Paiement non trouvé' });
     }
 
+    // AUTH CHECK: Is the requester the creator of the tontine?
+    if (payment.tontine.createur.toString() !== req.user.id) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Seul l\'administrateur (créateur) de cette tontine peut rejeter les paiements' 
+      });
+    }
+
     payment.statut = 'rejected';
     payment.dateValidation = new Date();
-
     await payment.save();
 
-    // Create Notification
+    // Create Notification for the payer
     await Notification.create({
       user: payment.user,
-      message: `Votre paiement de ${payment.montant} FCFA pour la tontine "${payment.tontine.nom}" a été refusé.`,
+      message: `❌ Votre paiement pour "${payment.tontine.nom}" a été rejeté. Veuillez vérifier les détails de la transaction.`,
       type: 'payment_rejected'
     });
 
@@ -105,7 +115,7 @@ exports.rejectPayment = async (req, res) => {
 exports.getTontinePayments = async (req, res) => {
   try {
     const payments = await Payment.find({ tontine: req.params.tontineId })
-      .populate('user', 'nom prenom')
+      .populate('user', 'nom prenom telephone')
       .sort('-datePaiement');
 
     res.json({ success: true, data: payments });
@@ -129,9 +139,9 @@ exports.getMyPayments = async (req, res) => {
   }
 };
 
-// @desc    Get all payments (Admin)
+// @desc    Get all payments (Super Admin only)
 // @route   GET /api/payments
-// @access  Private/Admin
+// @access  Private/SuperAdmin
 exports.getAllPayments = async (req, res) => {
   try {
     const payments = await Payment.find({})

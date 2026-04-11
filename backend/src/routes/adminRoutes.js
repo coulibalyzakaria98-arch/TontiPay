@@ -2,6 +2,7 @@ const express = require('express');
 const {
   getAllUsers,
   updateUserStatus,
+  updateUserRole,
   getAllTontines,
   deleteTontine,
   getSystemStats,
@@ -17,6 +18,7 @@ router.use(authorize('admin'));
 
 router.get('/users', getAllUsers);
 router.put('/users/:id/status', updateUserStatus);
+router.put('/users/:id/role', updateUserRole);
 router.get('/tontines', getAllTontines);
 router.delete('/tontines/:id', deleteTontine);
 router.get('/stats', getSystemStats);

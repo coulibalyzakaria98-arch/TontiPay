@@ -18,9 +18,11 @@ router.post('/', createPayment);
 router.get('/my-payments', getMyPayments);
 router.get('/tontine/:tontineId', getTontinePayments);
 
-// Admin only routes
+// Tontine Creator routes (security handled in controller)
+router.put('/:id/validate', validatePayment);
+router.put('/:id/reject', rejectPayment);
+
+// Super Admin only routes
 router.get('/', authorize('admin'), getAllPayments);
-router.put('/:id/validate', authorize('admin'), validatePayment);
-router.put('/:id/reject', authorize('admin'), rejectPayment);
 
 module.exports = router;
