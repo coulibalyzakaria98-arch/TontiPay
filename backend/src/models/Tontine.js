@@ -33,6 +33,10 @@ const tontineSchema = new mongoose.Schema({
     enum: ['en attente', 'en cours', 'terminée'],
     default: 'en attente',
   },
+  tourActuel: {
+    type: Number,
+    default: 1,
+  },
   code: {
     type: String,
     unique: true,

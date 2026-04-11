@@ -37,6 +37,7 @@ app.use('/api/tontines', tontineRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
@@ -44,3 +45,4 @@ app.get('/', (req, res) => {
 });
 
 module.exports = app;
+.exports = app;

@@ -15,6 +15,10 @@ const paymentSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Le montant est obligatoire'],
   },
+  tour: {
+    type: Number,
+    required: true,
+  },
   reference: {
     type: String,
     required: [true, 'La référence de transaction est obligatoire'],

@@ -1,18 +1,28 @@
 const Payment = require('../models/Payment');
 const Notification = require('../models/Notification');
+const Tontine = require('../models/Tontine');
+const { checkAndAdvanceRound } = require('./tontineController');
 
 // @desc    Create a new payment
 // @route   POST /api/payments
 // @access  Private
 exports.createPayment = async (req, res) => {
   try {
-    const { tontineId, montant, reference, preuve } = req.body;
+    const { tontineId, montant, reference, preuve, moyenPaiement } = req.body;
+
+    // Get current tour of the tontine
+    const tontine = await Tontine.findById(tontineId);
+    if (!tontine) {
+      return res.status(404).json({ success: false, error: 'Tontine non trouvée' });
+    }
 
     const payment = await Payment.create({
       user: req.user.id,
       tontine: tontineId,
       montant,
       reference,
+      moyenPaiement,
+      tour: tontine.tourActuel,
       preuve: preuve || null,
     });
 
@@ -43,6 +53,9 @@ exports.validatePayment = async (req, res) => {
     payment.dateValidation = new Date();
 
     await payment.save();
+
+    // Check if tontine should move to next round
+    await checkAndAdvanceRound(payment.tontine._id);
 
     // Create Notification
     await Notification.create({

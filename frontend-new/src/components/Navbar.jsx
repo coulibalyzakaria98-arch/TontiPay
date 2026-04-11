@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Bell, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Bell, LogOut, User, Shield } from 'lucide-react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchUnread = async () => {
       try {
         const response = await api.get('/notifications');
@@ -21,7 +25,7 @@ const Navbar = () => {
     fetchUnread();
     const interval = setInterval(fetchUnread, 60000); // Refresh every minute
     return () => clearInterval(interval);
-  }, [location.pathname]);
+  }, [location.pathname, user]);
 
   const navItems = [
     { label: 'Tableau de bord', path: '/', icon: LayoutDashboard },
@@ -30,6 +34,10 @@ const Navbar = () => {
     { label: 'Notifications', path: '/notifications', icon: Bell, badge: unreadCount },
     { label: 'Profil', path: '/profile', icon: User },
   ];
+
+  if (user?.role === 'admin') {
+    navItems.push({ label: 'Admin', path: '/admin', icon: Shield });
+  }
 
   return (
     <>
@@ -65,7 +73,10 @@ const Navbar = () => {
           })}
         </nav>
         <div className="p-4 border-t">
-          <button className="flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 w-full rounded-xl transition-colors">
+          <button 
+            onClick={logout}
+            className="flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 w-full rounded-xl transition-colors"
+          >
             <LogOut size={20} />
             <span>Déconnexion</span>
           </button>

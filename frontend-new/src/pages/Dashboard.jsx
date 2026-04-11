@@ -112,7 +112,10 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">{t.nom}</h3>
-                      <p className="text-sm text-gray-500">{t.nombreMembres} membres • {t.montant} FCFA</p>
+                      <p className="text-sm text-gray-500">
+                        {t.nombreMembres} membres • {t.montant} FCFA
+                        {t.statut === 'en cours' && ` • Tour ${t.tourActuel}/${t.nombreMembres}`}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-gray-400">

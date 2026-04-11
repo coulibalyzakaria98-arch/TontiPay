@@ -157,25 +157,40 @@ const TontineDetails = () => {
         {/* Members Section */}
         <section className="space-y-4">
           <h2 className="text-lg font-bold flex items-center gap-2 px-1">
-            <Users size={20} className="text-gray-400" /> Membres & Ordre
+            <Users size={20} className="text-gray-400" /> 
+            {tontine.statut === 'en attente' ? 'Membres inscrits' : 'Ordre de Passage'}
           </h2>
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 divide-y overflow-hidden">
-            {members.map((m) => (
-              <div key={m._id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 border-2 border-white shadow-sm">
-                    {m.position}
+            {members.map((m) => {
+              const isCurrentBeneficiary = tontine.statut === 'en cours' && m.position === tontine.tourActuel;
+              return (
+                <div key={m._id} className={`flex items-center justify-between p-4 hover:bg-gray-50 transition-colors ${isCurrentBeneficiary ? 'bg-primary-50/50 border-l-4 border-primary-500' : ''}`}>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-full flex flex-col items-center justify-center border-2 border-white shadow-sm ${isCurrentBeneficiary ? 'bg-primary-500 text-white' : 'bg-primary-50 text-primary-600'}`}>
+                      <span className={`text-[10px] font-bold leading-none uppercase ${isCurrentBeneficiary ? 'text-white/80' : 'text-primary-400'}`}>Tour</span>
+                      <span className={`text-lg font-black leading-none ${isCurrentBeneficiary ? 'text-white' : 'text-primary-600'}`}>{m.position}</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-gray-900">{m.userId.prenom} {m.userId.nom}</p>
+                        {isCurrentBeneficiary && (
+                          <span className="bg-primary-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black animate-pulse">EN COURS</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">{m.userId.telephone}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-gray-900">{m.userId.prenom} {m.userId.nom}</p>
-                    <p className="text-xs text-gray-500">{m.userId.telephone}</p>
+                  <div className="flex flex-col items-end gap-1">
+                    {m.userId._id === tontine.createur._id && (
+                      <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">ADMIN</span>
+                    )}
+                    {isCurrentBeneficiary && (
+                      <span className="text-[10px] text-primary-600 font-bold italic">Reçoit le pot 💰</span>
+                    )}
                   </div>
                 </div>
-                {m.userId._id === tontine.createur._id && (
-                  <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">ADMIN</span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
