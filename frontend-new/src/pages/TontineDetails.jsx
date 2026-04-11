@@ -268,5 +268,3 @@ const TontineDetails = () => {
 };
 
 export default TontineDetails;
-
-export default TontineDetails;
