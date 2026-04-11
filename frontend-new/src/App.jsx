@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import CreateTontine from './pages/CreateTontine';
 import TontineDetails from './pages/TontineDetails';
 import Notifications from './pages/Notifications';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
@@ -19,10 +20,26 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/tontines/create" element={<CreateTontine />} />
-          <Route path="/tontines/:id" element={<TontineDetails />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/tontines/create" element={
+            <ProtectedRoute>
+              <CreateTontine />
+            </ProtectedRoute>
+          } />
+          <Route path="/tontines/:id" element={
+            <ProtectedRoute>
+              <TontineDetails />
+            </ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          } />
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
           <Route path="/tontines" element={<div className="p-8">Page Mes Tontines (Bientôt disponible)</div>} />
           <Route path="/payments" element={<div className="p-8">Page Paiements (Bientôt disponible)</div>} />
           <Route path="/profile" element={<div className="p-8">Page Profil (Bientôt disponible)</div>} />
