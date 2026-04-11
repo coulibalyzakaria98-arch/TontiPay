@@ -25,7 +25,7 @@ const paymentSchema = new mongoose.Schema({
   },
   moyenPaiement: {
     type: String,
-    enum: ['Orange Money', 'MTN Mobile Money', 'Moov Money'],
+    enum: ['Orange Money', 'MTN Mobile Money', 'Moov Money', 'Wave', 'Espèces / Remise directe'],
     required: [true, 'Le moyen de paiement est obligatoire'],
   },
   preuve: {

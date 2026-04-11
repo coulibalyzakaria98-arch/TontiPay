@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Banknote, Smartphone, Hash, Loader2, CheckCircle2, List } from 'lucide-react';
+import { X, Banknote, Smartphone, Hash, Loader2, CheckCircle2, List, Info } from 'lucide-react';
 import api from '../services/api';
 
 const PaymentModal = ({ isOpen, onClose, tontine: initialTontine, onSuccess }) => {
@@ -27,6 +27,23 @@ const PaymentModal = ({ isOpen, onClose, tontine: initialTontine, onSuccess }) =
       fetchMyTontines();
     }
   }, [isOpen, initialTontine]);
+
+  const getReferencePlaceholder = () => {
+    switch (formData.moyenPaiement) {
+      case 'Orange Money': return "Ex: PP230415.1245.A00123";
+      case 'MTN Mobile Money': return "Ex: 1234567890 (ID de transaction)";
+      case 'Moov Money': return "Ex: REF-MOOV-987654";
+      case 'Espèces / Remise directe': return "Ex: Remis en mains propres à l'admin";
+      default: return "Saisissez la référence";
+    }
+  };
+
+  const getReferenceHelpText = () => {
+    if (formData.moyenPaiement === 'Espèces / Remise directe') {
+      return "Précisez la date ou le lieu de la remise.";
+    }
+    return "Copiez l'ID reçu par SMS après votre dépôt.";
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,7 +104,7 @@ const PaymentModal = ({ isOpen, onClose, tontine: initialTontine, onSuccess }) =
                 </div>
               )}
 
-              {/* Sélection de la Tontine (si non fournie) */}
+              {/* Sélection de la Tontine */}
               {!initialTontine && (
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase ml-1 flex items-center gap-2">
@@ -134,27 +151,31 @@ const PaymentModal = ({ isOpen, onClose, tontine: initialTontine, onSuccess }) =
                 <select
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none text-gray-900 shadow-sm font-bold"
                   value={formData.moyenPaiement}
-                  onChange={(e) => setFormData({ ...formData, moyenPaiement: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, moyenPaiement: e.target.value, reference: '' })}
                 >
                   <option value="Orange Money">Orange Money</option>
                   <option value="MTN Mobile Money">MTN Mobile Money</option>
                   <option value="Moov Money">Moov Money</option>
+                  <option value="Wave">Wave</option>
                   <option value="Espèces / Remise directe">Espèces / Remise directe</option>
                 </select>
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase ml-1 flex items-center gap-2">
-                  <Hash size={14} /> Référence ou Note
+                  <Hash size={14} /> Référence de transaction
                 </label>
                 <input
                   type="text"
                   required
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-400 text-gray-900 shadow-sm font-medium"
-                  placeholder="Ex: Ref Orange Money ou 'Remis en mains propres'"
+                  placeholder={getReferencePlaceholder()}
                   value={formData.reference}
                   onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
                 />
+                <p className="text-[10px] text-primary-500 flex items-center gap-1 ml-1 font-medium">
+                  <Info size={10} /> {getReferenceHelpText()}
+                </p>
               </div>
 
               <button
@@ -165,7 +186,7 @@ const PaymentModal = ({ isOpen, onClose, tontine: initialTontine, onSuccess }) =
                 {loading ? (
                   <Loader2 className="animate-spin" size={24} />
                 ) : (
-                  <span>Envoyer la déclaration</span>
+                  <span>Confirmer la déclaration</span>
                 )}
               </button>
             </form>
