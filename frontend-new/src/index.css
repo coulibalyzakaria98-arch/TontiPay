@@ -28,12 +28,14 @@
 }
 
 input, textarea {
-  color: #000000 !important; /* Force black text */
-  background-color: #ffffff !important; /* Force white background */
+  color: #111827 !important; /* Noir profond (Gray-900) */
+  background-color: #ffffff !important; /* Fond blanc pur */
 }
 
-input::placeholder {
-  color: #6b7280 !important; /* Force visible gray placeholder */
+input::placeholder, 
+textarea::placeholder {
+  color: #4b5563 !important; /* Gris foncé (Gray-600) très lisible */
+  opacity: 1 !important;    /* Force l'opacité à 100% */
 }
 
 body {
