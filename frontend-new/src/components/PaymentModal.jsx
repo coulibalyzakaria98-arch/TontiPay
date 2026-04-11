@@ -88,7 +88,7 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
                   <Smartphone size={14} /> Moyen de paiement
                 </label>
                 <select
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none text-gray-900 shadow-sm"
                   value={formData.moyenPaiement}
                   onChange={(e) => setFormData({ ...formData, moyenPaiement: e.target.value })}
                 >
@@ -105,7 +105,7 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
                 <input
                   type="text"
                   required
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-300"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-300 text-gray-900 shadow-sm"
                   placeholder="Ex: PP220130.1245.A001"
                   value={formData.reference}
                   onChange={(e) => setFormData({ ...formData, reference: e.target.value })}

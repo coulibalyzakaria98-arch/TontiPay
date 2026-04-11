@@ -74,7 +74,7 @@ const Register = () => {
               <input
                 type="text"
                 required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm"
+                className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm text-gray-900 shadow-sm !text-black"
                 placeholder="Dupont"
                 value={formData.nom}
                 onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
@@ -120,7 +120,7 @@ const Register = () => {
                 type={showPassword ? 'text' : 'password'}
                 required
                 minLength={6}
-                className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm"
+                className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm text-gray-900 shadow-sm !text-black"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -166,3 +166,9 @@ const Register = () => {
 };
 
 export default Register;
+
+export default Register;
+
+
+export default Register;
+fault Register;

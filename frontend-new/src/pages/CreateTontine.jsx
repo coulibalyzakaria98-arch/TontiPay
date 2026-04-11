@@ -93,7 +93,7 @@ const CreateTontine = () => {
               <input
                 type="text"
                 required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-gray-900 shadow-sm"
                 placeholder="Ex: Tontine Famille, Projet Vacances..."
                 value={formData.nom}
                 onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
@@ -111,7 +111,7 @@ const CreateTontine = () => {
                   type="number"
                   required
                   min="500"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-gray-900 shadow-sm"
                   placeholder="5000"
                   value={formData.montant}
                   onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
@@ -125,7 +125,7 @@ const CreateTontine = () => {
                   Fréquence
                 </label>
                 <select
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none text-gray-900 shadow-sm"
                   value={formData.frequence}
                   onChange={(e) => setFormData({ ...formData, frequence: e.target.value })}
                 >
@@ -146,7 +146,7 @@ const CreateTontine = () => {
                   type="number"
                   required
                   min="2"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-gray-900 shadow-sm"
                   placeholder="12"
                   value={formData.nombreMembres}
                   onChange={(e) => setFormData({ ...formData, nombreMembres: e.target.value })}
@@ -162,7 +162,7 @@ const CreateTontine = () => {
                 <input
                   type="date"
                   required
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-gray-900 shadow-sm"
                   value={formData.dateDebut}
                   onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
                 />

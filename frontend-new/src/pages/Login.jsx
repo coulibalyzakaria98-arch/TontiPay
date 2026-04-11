@@ -70,7 +70,7 @@ const Login = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all text-gray-900 shadow-sm !text-black"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -114,4 +114,5 @@ const Login = () => {
   );
 };
 
+export default Login;
 export default Login;

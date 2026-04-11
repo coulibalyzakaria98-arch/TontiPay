@@ -17,14 +17,23 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color-scheme: light;
+  color: #1f2937;
   background-color: #f3f4f6;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+input, textarea {
+  color: #000000 !important; /* Force black text */
+  background-color: #ffffff !important; /* Force white background */
+}
+
+input::placeholder {
+  color: #6b7280 !important; /* Force visible gray placeholder */
 }
 
 body {

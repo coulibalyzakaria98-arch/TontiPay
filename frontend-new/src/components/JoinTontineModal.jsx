@@ -56,7 +56,7 @@ const JoinTontineModal = ({ isOpen, onClose }) => {
                 required
                 maxLength={6}
                 autoFocus
-                className="w-full text-center text-3xl font-bold tracking-[0.5em] py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:border-primary-500 focus:ring-0 outline-none transition-all uppercase placeholder:text-gray-200"
+                className="w-full text-center text-3xl font-bold tracking-[0.5em] py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:border-primary-500 focus:ring-0 outline-none transition-all uppercase placeholder:text-gray-200 text-gray-900"
                 placeholder="XXXXXX"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
