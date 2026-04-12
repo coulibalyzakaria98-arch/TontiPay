@@ -19,21 +19,38 @@ exports.register = async (req, res) => {
   try {
     const { nom, prenom, email, telephone, password } = req.body;
 
+    // 1. Vérification manuelle des doublons pour message clair
     const userExists = await User.findOne({ $or: [{ email }, { telephone }] });
     if (userExists) {
-      return res.status(400).json({ success: false, error: 'L\'utilisateur existe déjà' });
-    }
-
-    const user = await User.create({ nom, prenom, email, telephone, password });
-
-    if (user) {
-      res.status(201).json({
-        success: true,
-        token: generateToken(user._id),
-        data: user
+      const field = userExists.email === email ? 'Email' : 'Numéro de téléphone';
+      return res.status(400).json({ 
+        success: false, 
+        error: `${field} déjà utilisé par un autre compte.` 
       });
     }
+
+    // 2. Tentative de création
+    const user = await User.create({ nom, prenom, email, telephone, password });
+
+    res.status(201).json({
+      success: true,
+      token: generateToken(user._id),
+      data: {
+        _id: user._id,
+        nom: user.nom,
+        prenom: user.prenom,
+        email: user.email,
+        telephone: user.telephone,
+        role: user.role
+      }
+    });
   } catch (error) {
+    // 3. Gestion des erreurs de validation Mongoose
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ success: false, error: messages[0] });
+    }
+    
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -47,6 +64,10 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Veuillez fournir un email et un mot de passe' });
+    }
+
     const user = await User.findOne({ email }).select('+password');
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, error: 'Identifiants invalides' });
@@ -55,7 +76,14 @@ exports.login = async (req, res) => {
     res.json({
       success: true,
       token: generateToken(user._id),
-      data: user
+      data: {
+        _id: user._id,
+        nom: user.nom,
+        prenom: user.prenom,
+        email: user.email,
+        telephone: user.telephone,
+        role: user.role
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -68,8 +96,12 @@ exports.login = async (req, res) => {
  * @access  Private
  */
 exports.getMe = async (req, res) => {
-  const user = await User.findById(req.user.id);
-  res.json({ success: true, data: user });
+  try {
+    const user = await User.findById(req.user.id);
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
 /**
