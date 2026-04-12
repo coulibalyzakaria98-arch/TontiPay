@@ -56,11 +56,14 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 ml-1">Prénom</label>
+              <label htmlFor="prenom" className="text-sm font-semibold text-gray-700 ml-1">Prénom</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
+                  id="prenom"
+                  name="prenom"
                   type="text"
+                  autoComplete="given-name"
                   required
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm"
                   placeholder="Jean"
@@ -70,11 +73,14 @@ const Register = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700 ml-1">Nom</label>
+              <label htmlFor="nom" className="text-sm font-semibold text-gray-700 ml-1">Nom</label>
               <input
+                id="nom"
+                name="nom"
                 type="text"
+                autoComplete="family-name"
                 required
-                className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm text-gray-900 shadow-sm !text-black"
+                className="w-full pl-4 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm text-gray-900 shadow-sm !text-black"
                 placeholder="Dupont"
                 value={formData.nom}
                 onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
@@ -83,11 +89,14 @@ const Register = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 ml-1">Numéro de téléphone</label>
+            <label htmlFor="telephone" className="text-sm font-semibold text-gray-700 ml-1">Numéro de téléphone</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
+                id="telephone"
+                name="telephone"
                 type="tel"
+                autoComplete="tel"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm"
                 placeholder="07 00 00 00 00"
@@ -98,11 +107,14 @@ const Register = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 ml-1">Email</label>
+            <label htmlFor="email" className="text-sm font-semibold text-gray-700 ml-1">Email</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
+                id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm"
                 placeholder="votre@email.com"
@@ -113,11 +125,14 @@ const Register = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 ml-1">Mot de passe</label>
+            <label htmlFor="password" className="text-sm font-semibold text-gray-700 ml-1">Mot de passe</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
+                id="password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 required
                 minLength={6}
                 className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm text-gray-900 shadow-sm !text-black"

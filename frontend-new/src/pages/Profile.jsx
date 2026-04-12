@@ -54,7 +54,6 @@ const Profile = () => {
     try {
       await api.put('/auth/updatedetails', profileData);
       setMessage({ type: 'success', text: 'Profil mis à jour avec succès !' });
-      // Optionnel : re-fetch user info ou rafraîchir la page
     } catch (error) {
       setMessage({ type: 'error', text: error.response?.data?.error || 'Erreur lors de la mise à jour.' });
     } finally {
@@ -132,10 +131,13 @@ const Profile = () => {
 
           <form onSubmit={handleProfileUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Prénom</label>
+              <label htmlFor="profile-prenom" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Prénom</label>
               <div className="relative">
                 <input 
+                  id="profile-prenom"
+                  name="prenom"
                   type="text" 
+                  autoComplete="given-name"
                   value={profileData.prenom}
                   onChange={(e) => setProfileData({...profileData, prenom: e.target.value})}
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all"
@@ -144,10 +146,13 @@ const Profile = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nom</label>
+              <label htmlFor="profile-nom" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nom</label>
               <div className="relative">
                 <input 
+                  id="profile-nom"
+                  name="nom"
                   type="text" 
+                  autoComplete="family-name"
                   value={profileData.nom}
                   onChange={(e) => setProfileData({...profileData, nom: e.target.value})}
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all"
@@ -156,10 +161,13 @@ const Profile = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email</label>
+              <label htmlFor="profile-email" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email</label>
               <div className="relative">
                 <input 
+                  id="profile-email"
+                  name="email"
                   type="email" 
+                  autoComplete="email"
                   value={profileData.email}
                   onChange={(e) => setProfileData({...profileData, email: e.target.value})}
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all"
@@ -168,10 +176,13 @@ const Profile = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Téléphone</label>
+              <label htmlFor="profile-telephone" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Téléphone</label>
               <div className="relative">
                 <input 
+                  id="profile-telephone"
+                  name="telephone"
                   type="tel" 
+                  autoComplete="tel"
                   value={profileData.telephone}
                   onChange={(e) => setProfileData({...profileData, telephone: e.target.value})}
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all"
@@ -204,9 +215,12 @@ const Profile = () => {
 
           <form onSubmit={handlePasswordUpdate} className="space-y-5">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mot de passe actuel</label>
+              <label htmlFor="current-password" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mot de passe actuel</label>
               <input 
+                id="current-password"
+                name="currentPassword"
                 type="password" 
+                autoComplete="current-password"
                 value={passwordData.currentPassword}
                 onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
                 className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-orange-500 transition-all"
@@ -215,9 +229,12 @@ const Profile = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nouveau mot de passe</label>
+                <label htmlFor="new-password" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nouveau mot de passe</label>
                 <input 
+                  id="new-password"
+                  name="newPassword"
                   type="password" 
+                  autoComplete="new-password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-orange-500 transition-all"
@@ -225,9 +242,12 @@ const Profile = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Confirmer le mot de passe</label>
+                <label htmlFor="confirm-password" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Confirmer le mot de passe</label>
                 <input 
+                  id="confirm-password"
+                  name="confirmPassword"
                   type="password" 
+                  autoComplete="new-password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
                   className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-orange-500 transition-all"

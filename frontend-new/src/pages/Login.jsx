@@ -49,11 +49,14 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 ml-1">Email</label>
+            <label htmlFor="email" className="text-sm font-semibold text-gray-700 ml-1">Email</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
+                id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
                 placeholder="votre@email.com"
@@ -64,11 +67,14 @@ const Login = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 ml-1">Mot de passe</label>
+            <label htmlFor="password" className="text-sm font-semibold text-gray-700 ml-1">Mot de passe</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
+                id="password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 required
                 className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all text-gray-900 shadow-sm !text-black"
                 placeholder="••••••••"

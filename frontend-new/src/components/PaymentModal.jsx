@@ -85,10 +85,12 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
             <div className="space-y-4">
               {/* Montant */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Montant versé (FCFA)</label>
+                <label htmlFor="payment-amount" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Montant versé (FCFA)</label>
                 <div className="relative">
                   <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input 
+                    id="payment-amount"
+                    name="amount"
                     type="number" 
                     required
                     value={formData.amount}
@@ -100,10 +102,12 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
 
               {/* Méthode */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Moyen de paiement</label>
+                <label htmlFor="payment-method" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Moyen de paiement</label>
                 <div className="relative">
                   <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <select 
+                    id="payment-method"
+                    name="method"
                     value={formData.method}
                     onChange={(e) => setFormData({...formData, method: e.target.value})}
                     className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all appearance-none"
@@ -119,10 +123,12 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
 
               {/* Référence */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Référence de transaction</label>
+                <label htmlFor="payment-reference" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Référence de transaction</label>
                 <div className="relative">
                   <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input 
+                    id="payment-reference"
+                    name="reference"
                     type="text" 
                     required
                     placeholder="Ex: ID de transaction Mobile Money"
