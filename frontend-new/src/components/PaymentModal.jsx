@@ -41,7 +41,7 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
         onClose();
       }, 2000);
     } catch (err) {
-      setError(err.response?.data?.error || 'Erreur lors de la soumission');
+      setError(err.response?.data?.error || 'Erreur lors de la soumission. Vérifiez les informations.');
     } finally {
       setLoading(false);
     }
@@ -50,18 +50,14 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200">
-        
-        {/* Header */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <div>
             <h2 className="text-xl font-black text-gray-900 tracking-tight">Déclarer un paiement</h2>
             <p className="text-xs text-gray-500 font-medium">{tontine?.nom}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X size={20} className="text-gray-400" />
-          </button>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><X size={20}/></button>
         </div>
 
         {success ? (
@@ -70,48 +66,26 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
               <CheckCircle2 size={40} />
             </div>
             <h3 className="text-xl font-black text-gray-900">Demande envoyée !</h3>
-            <p className="text-gray-500 text-sm font-medium">Votre paiement est en attente de validation par l'administrateur.</p>
+            <p className="text-gray-500 text-sm">En attente de validation par l'administrateur.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {error && <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold border border-red-100 flex items-center gap-2"><AlertCircle size={16}/>{error}</div>}
             
-            {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold border border-red-100 flex items-center gap-2">
-                <AlertCircle size={16} />
-                {error}
-              </div>
-            )}
-
             <div className="space-y-4">
-              {/* Montant */}
               <div className="space-y-2">
-                <label htmlFor="payment-amount" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Montant versé (FCFA)</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Montant versé (FCFA)</label>
                 <div className="relative">
                   <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    id="payment-amount"
-                    name="amount"
-                    type="number" 
-                    required
-                    value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all"
-                  />
+                  <input type="number" required value={formData.amount} onChange={(e)=>setFormData({...formData, amount: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500" />
                 </div>
               </div>
 
-              {/* Méthode */}
               <div className="space-y-2">
-                <label htmlFor="payment-method" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Moyen de paiement</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Moyen de paiement</label>
                 <div className="relative">
                   <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <select 
-                    id="payment-method"
-                    name="method"
-                    value={formData.method}
-                    onChange={(e) => setFormData({...formData, method: e.target.value})}
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all appearance-none"
-                  >
+                  <select value={formData.method} onChange={(e)=>setFormData({...formData, method: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 appearance-none">
                     <option value="orange">Orange Money</option>
                     <option value="mtn">MTN Mobile Money</option>
                     <option value="moov">Moov Money</option>
@@ -121,30 +95,16 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
                 </div>
               </div>
 
-              {/* Référence */}
               <div className="space-y-2">
-                <label htmlFor="payment-reference" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Référence de transaction</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Référence de transaction</label>
                 <div className="relative">
                   <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    id="payment-reference"
-                    name="reference"
-                    type="text" 
-                    required
-                    placeholder="Ex: ID de transaction Mobile Money"
-                    value={formData.reference}
-                    onChange={(e) => setFormData({...formData, reference: e.target.value})}
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all"
-                  />
+                  <input type="text" required placeholder="Ex: ID de transaction" value={formData.reference} onChange={(e)=>setFormData({...formData, reference: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500" />
                 </div>
               </div>
             </div>
 
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full bg-primary-600 text-white p-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary-100 hover:bg-primary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading} className="w-full bg-primary-600 text-white p-5 rounded-2xl font-black text-xs uppercase shadow-xl hover:bg-primary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
               {loading ? <Loader2 className="animate-spin" size={18} /> : 'Soumettre le paiement'}
             </button>
           </form>
