@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const jwt = require('jsonwebtoken');
+const generateToken = require('../utils/generateToken');
 const { z } = require('zod');
 
 // Zod schema for profile update
@@ -9,6 +9,58 @@ const updateSchema = z.object({
   email: z.string().email("Email invalide").optional(),
   telephone: z.string().min(8, "Numéro de téléphone trop court").optional(),
 });
+
+/**
+ * @desc    Register user
+ * @route   POST /api/auth/register
+ * @access  Public
+ */
+exports.register = async (req, res) => {
+  try {
+    const { nom, prenom, email, telephone, password } = req.body;
+
+    const userExists = await User.findOne({ $or: [{ email }, { telephone }] });
+    if (userExists) {
+      return res.status(400).json({ success: false, error: 'L\'utilisateur existe déjà' });
+    }
+
+    const user = await User.create({ nom, prenom, email, telephone, password });
+
+    if (user) {
+      res.status(201).json({
+        success: true,
+        token: generateToken(user._id),
+        data: user
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * @desc    Login user
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email }).select('+password');
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ success: false, error: 'Identifiants invalides' });
+    }
+
+    res.json({
+      success: true,
+      token: generateToken(user._id),
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 /**
  * @desc    Get current logged in user
@@ -28,12 +80,10 @@ exports.getMe = async (req, res) => {
 exports.updateDetails = async (req, res) => {
   try {
     const validatedData = updateSchema.parse(req.body);
-
     const user = await User.findByIdAndUpdate(req.user.id, validatedData, {
       new: true,
       runValidators: true,
     });
-
     res.json({ success: true, data: user });
   } catch (error) {
     if (error.name === 'ZodError') {
@@ -51,8 +101,6 @@ exports.updateDetails = async (req, res) => {
 exports.updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-
-    // Check current password
     const user = await User.findById(req.user.id).select('+password');
 
     if (!(await user.matchPassword(currentPassword))) {
@@ -61,9 +109,17 @@ exports.updatePassword = async (req, res) => {
 
     user.password = newPassword;
     await user.save();
-
     res.json({ success: true, message: 'Mot de passe mis à jour avec succès' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
+};
+
+/**
+ * @desc    Logout user
+ * @route   GET /api/auth/logout
+ * @access  Private
+ */
+exports.logout = async (req, res) => {
+  res.json({ success: true, message: 'Déconnexion réussie' });
 };

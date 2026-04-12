@@ -29,7 +29,10 @@ app.use(helmet({
 }));
 
 // Enable CORS
-app.use(cors());
+app.use(cors({
+  origin: ['https://tonti-pay-p4a8.vercel.app', 'http://localhost:5173'],
+  credentials: true
+}));
 
 // Mount routers
 app.use('/api/auth', authRoutes);
