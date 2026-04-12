@@ -7,9 +7,19 @@ const tontineService = require('../services/tontineService');
 // @access  Private
 exports.createTontine = async (req, res) => {
   try {
-    req.body.createur = req.user.id;
+    const typeTirage = req.body.typeTirage;
+    const normalizedTypeTirage =
+      typeTirage === 'hasard' || typeTirage === 'hasard_pur'
+        ? 'aleatoire'
+        : typeTirage;
 
-    const tontine = await Tontine.create(req.body);
+    const payload = {
+      ...req.body,
+      createur: req.user.id,
+      typeTirage: normalizedTypeTirage,
+    };
+
+    const tontine = await Tontine.create(payload);
 
     // Le créateur est TOUJOURS le premier arrivant (ordreArrivee = 1)
     await Membre.create({
