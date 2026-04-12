@@ -9,6 +9,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import api from '../services/api';
+import api from '../services/api';
 
 const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
   const [formData, setFormData] = useState({
