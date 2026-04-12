@@ -433,10 +433,11 @@ const AdminDashboard = () => {
                             <p className="text-[10px] text-gray-300 italic font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
                           )}
                         </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
