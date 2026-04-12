@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,8 +22,6 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    console.log("Tentative de login vers:", api.defaults.baseURL);
 
     try {
       await login(formData);
