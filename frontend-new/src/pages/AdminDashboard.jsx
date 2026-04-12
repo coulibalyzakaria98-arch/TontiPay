@@ -22,6 +22,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [tontines, setTontines] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [paymentFilter, setPaymentFilter] = useState('all'); // 'all', 'en_attente', 'valide', 'rejete'
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'tontines' | 'payments'
 
@@ -37,7 +38,12 @@ const AdminDashboard = () => {
       setStats(statsRes.data.data);
       setUsers(usersRes.data.data);
       setTontines(tontinesRes.data.data);
-      setPayments(paymentsRes.data.data);
+      // Sort payments: pending first, then validated, then rejected
+      const sortedPayments = (paymentsRes.data.data || []).sort((a, b) => {
+        const statusOrder = { 'en_attente': 0, 'valide': 1, 'rejete': 2 };
+        return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
+      });
+      setPayments(sortedPayments);
     } catch (err) {
       console.error("Erreur lors du chargement des données admin", err);
     } finally {
@@ -113,6 +119,9 @@ const AdminDashboard = () => {
     );
   }
 
+  // Compute pending payments count
+  const pendingPaymentsCount = payments.filter(p => p.status === 'en_attente').length;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <header className="bg-white border-b px-6 py-8">
@@ -176,12 +185,12 @@ const AdminDashboard = () => {
           {[
             { id: 'users', label: 'Utilisateurs', icon: Users },
             { id: 'tontines', label: 'Tontines', icon: TrendingUp },
-            { id: 'payments', label: 'Transactions', icon: CreditCard }
+            { id: 'payments', label: 'Transactions', icon: CreditCard, badge: pendingPaymentsCount }
           ].map(tab => (
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all relative ${
                 activeTab === tab.id 
                   ? 'bg-primary-500 text-white shadow-md' 
                   : 'text-gray-500 hover:bg-gray-50'
@@ -189,6 +198,15 @@ const AdminDashboard = () => {
             >
               <tab.icon size={18} />
               {tab.label}
+              {tab.badge && tab.badge > 0 && (
+                <span className={`inline-flex items-center justify-center w-6 h-6 text-xs font-black rounded-full ${
+                  activeTab === tab.id 
+                    ? 'bg-white/30 text-white' 
+                    : 'bg-red-500 text-white'
+                }`}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -321,75 +339,100 @@ const AdminDashboard = () => {
 
           {/* PAYMENTS TAB */}
           {activeTab === 'payments' && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b">
-                  <tr>
-                    <th className="px-6 py-5">Contributeur</th>
-                    <th className="px-6 py-5">Tontine</th>
-                    <th className="px-6 py-5">Détails Paiement</th>
-                    <th className="px-6 py-5">Statut</th>
-                    <th className="px-6 py-5 text-right">Validation</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {payments.map((p) => (
-                    <tr key={p._id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 text-xs">
-                            {p.user.prenom[0]}{p.user.nom[0]}
+            <div>
+              {/* Filter Bar */}
+              <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap gap-2">
+                {[
+                  { id: 'all', label: 'Tous', count: payments.length },
+                  { id: 'en_attente', label: 'En attente', count: payments.filter(p => p.status === 'en_attente').length, color: 'amber' },
+                  { id: 'valide', label: 'Validés', count: payments.filter(p => p.status === 'valide').length, color: 'green' },
+                  { id: 'rejete', label: 'Rejetés', count: payments.filter(p => p.status === 'rejete').length, color: 'red' }
+                ].map(filter => (
+                  <button
+                    key={filter.id}
+                    onClick={() => setPaymentFilter(filter.id)}
+                    className={`px-4 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 ${
+                      paymentFilter === filter.id
+                        ? `text-white ${filter.color ? `bg-${filter.color}-600` : 'bg-primary-600'}`
+                        : `text-gray-700 bg-gray-100 hover:bg-gray-200`
+                    }`}
+                  >
+                    {filter.label}
+                    <span className="bg-white/20 px-2 py-0.5 rounded font-black text-[11px]">{filter.count}</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Payments Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b">
+                    <tr>
+                      <th className="px-6 py-5">Contributeur</th>
+                      <th className="px-6 py-5">Tontine</th>
+                      <th className="px-6 py-5">Détails Paiement</th>
+                      <th className="px-6 py-5">Statut</th>
+                      <th className="px-6 py-5 text-right">Validation</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {(paymentFilter === 'all' ? payments : payments.filter(p => p.status === paymentFilter)).map((p) => (
+                      <tr key={p._id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 text-xs">
+                              {p.user.prenom[0]}{p.user.nom[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-gray-900">{p.user.prenom} {p.user.nom}</p>
+                              <p className="text-[9px] text-gray-400 font-bold uppercase">{p.user.telephone}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-gray-900">{p.user.prenom} {p.user.nom}</p>
-                            <p className="text-[9px] text-gray-400 font-bold uppercase">{p.user.telephone}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-black text-primary-600">{p.tontine.nom}</p>
+                          <p className="text-[10px] text-gray-400 font-medium italic">Tour n°{p.tour}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            <p className="text-sm font-black text-gray-900">+{p.amount.toLocaleString()} FCFA</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{p.method}</span>
+                              <span className="text-[10px] font-mono text-gray-300">Ref: {p.reference}</span>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-black text-primary-600">{p.tontine.nom}</p>
-                        <p className="text-[10px] text-gray-400 font-medium italic">Tour n°{p.tour}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <p className="text-sm font-black text-gray-900">+{p.amount.toLocaleString()} FCFA</p>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{p.method}</span>
-                            <span className="text-[10px] font-mono text-gray-300">Ref: {p.reference}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full ${
-                          p.status === 'valide' ? 'bg-green-100 text-green-700' : 
-                          p.status === 'en_attente' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {p.status === 'en_attente' && <Clock size={10} className="animate-spin" />}
-                          {p.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {p.status === 'en_attente' ? (
-                          <div className="flex justify-end gap-2">
-                            <button 
-                              onClick={() => handleRejectPayment(p._id)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                              title="Rejeter"
-                            >
-                              <XCircle size={18} />
-                            </button>
-                            <button 
-                              onClick={() => handleValidatePayment(p._id)}
-                              className="bg-green-600 text-white p-2 rounded-xl shadow-lg hover:bg-green-700 transition-all transform active:scale-95"
-                              title="Valider"
-                            >
-                              <CheckCircle2 size={18} />
-                            </button>
-                          </div>
-                        ) : (
-                          <p className="text-[10px] text-gray-300 italic font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
-                        )}
-                      </td>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full ${
+                            p.status === 'valide' ? 'bg-green-100 text-green-700' : 
+                            p.status === 'en_attente' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                            {p.status === 'en_attente' && <Clock size={10} className="animate-spin" />}
+                            {p.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {p.status === 'en_attente' ? (
+                            <div className="flex justify-end gap-2">
+                              <button 
+                                onClick={() => handleRejectPayment(p._id)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                title="Rejeter"
+                              >
+                                <XCircle size={18} />
+                              </button>
+                              <button 
+                                onClick={() => handleValidatePayment(p._id)}
+                                className="bg-green-600 text-white p-2 rounded-xl shadow-lg hover:bg-green-700 transition-all transform active:scale-95"
+                                title="Valider"
+                              >
+                                <CheckCircle2 size={18} />
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-gray-300 italic font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
+                          )}
+                        </td>
                     </tr>
                   ))}
                 </tbody>

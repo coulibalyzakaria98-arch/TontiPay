@@ -10,16 +10,22 @@ import {
   FileText,
   AlertCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import PaymentModal from '../components/PaymentModal';
 
 const Payments = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [tontines, setTontines] = useState([]);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedTontine, setSelectedTontine] = useState(null);
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
@@ -35,9 +41,22 @@ const Payments = () => {
     }
   }, [page]);
 
+  const fetchTontines = useCallback(async () => {
+    try {
+      const response = await api.get('/tontines/my-tontines');
+      setTontines(response.data.data || []);
+      if (response.data.data && response.data.data.length > 0) {
+        setSelectedTontine(response.data.data[0]);
+      }
+    } catch (error) {
+      console.error("Erreur chargement tontines", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchPayments();
-  }, [fetchPayments]);
+    fetchTontines();
+  }, [fetchPayments, fetchTontines]);
 
   const handleDownloadReceipt = async (paymentId, receiptId) => {
     try {
@@ -78,6 +97,18 @@ const Payments = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      <PaymentModal 
+        isOpen={isPaymentModalOpen} 
+        onClose={() => setIsPaymentModalOpen(false)} 
+        tontine={selectedTontine}
+        onSuccess={() => {
+          fetchPayments();
+          if (tontines.length > 0) {
+            setSelectedTontine(tontines[0]);
+          }
+        }}
+      />
+      
       <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -86,7 +117,14 @@ const Payments = () => {
             </Link>
             <h1 className="text-xl font-black text-gray-900 tracking-tight">Historique des Transactions</h1>
           </div>
-          <FileText className="text-gray-300" size={24} />
+          <button 
+            onClick={() => setIsPaymentModalOpen(true)}
+            disabled={tontines.length === 0}
+            className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white p-2 rounded-2xl transition-all shadow-lg disabled:cursor-not-allowed"
+            title={tontines.length === 0 ? "Vous devez rejoindre une tontine d'abord" : "Déclarer un paiement"}
+          >
+            <Plus size={24} />
+          </button>
         </div>
       </header>
 
@@ -175,8 +213,31 @@ const Payments = () => {
               )}
             </>
           ) : (
-            <div className="bg-white p-12 rounded-[40px] text-center border-2 border-dashed border-gray-100">
-                <p className="text-gray-500 font-medium italic">Aucune transaction enregistrée.</p>
+            <div className="bg-white p-12 rounded-[40px] text-center border-2 border-dashed border-gray-100 space-y-6">
+                <div>
+                  <h3 className="text-lg font-black text-gray-900 mb-2">Aucune transaction enregistrée</h3>
+                  <p className="text-gray-500 font-medium italic mb-2">Déclarez votre premier paiement pour participer à la tontine</p>
+                </div>
+                {tontines.length > 0 ? (
+                  <button 
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-2xl font-black text-sm inline-flex items-center gap-2 shadow-lg transition-all"
+                  >
+                    <Plus size={18} />
+                    Déclarer un paiement
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-gray-400 text-sm font-medium">Vous devez d'abord rejoindre une tontine</p>
+                    <Link 
+                      to="/tontines" 
+                      className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-2xl font-black text-sm inline-flex items-center gap-2 shadow-lg transition-all"
+                    >
+                      <ArrowRight size={18} />
+                      Rejoindre une tontine
+                    </Link>
+                  </div>
+                )}
             </div>
           )}
         </div>
