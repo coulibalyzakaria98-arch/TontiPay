@@ -11,11 +11,12 @@ exports.createTontine = async (req, res) => {
 
     const tontine = await Tontine.create(req.body);
 
-    // Add creator as first member
+    // Le créateur est TOUJOURS le premier arrivant (ordreArrivee = 1)
     await Membre.create({
       userId: req.user.id,
       tontineId: tontine._id,
-      position: 1,
+      position: 1, // Sera recalculé lors du tirage au sort si besoin
+      ordreArrivee: 1,
     });
 
     res.status(201).json({
@@ -46,13 +47,10 @@ exports.joinTontine = async (req, res) => {
       });
     }
 
-    // Check if tontine is full
-    const currentMembersCount = await Membre.countDocuments({ tontineId: tontine._id });
-
-    if (currentMembersCount >= tontine.nombreMembres) {
+    if (tontine.statut !== 'en attente') {
       return res.status(400).json({
         success: false,
-        error: 'Cette tontine est déjà complète',
+        error: 'Cette tontine a déjà commencé ou est terminée',
       });
     }
 
@@ -69,14 +67,25 @@ exports.joinTontine = async (req, res) => {
       });
     }
 
-    // Join tontine
+    // Nombre actuel de membres pour déterminer l'ordre d'arrivée
+    const currentMembersCount = await Membre.countDocuments({ tontineId: tontine._id });
+
+    if (currentMembersCount >= tontine.nombreMembres) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cette tontine est déjà complète',
+      });
+    }
+
+    // Rejoindre la tontine (ordreArrivee = count + 1)
     const membre = await Membre.create({
       userId: req.user.id,
       tontineId: tontine._id,
-      position: currentMembersCount + 1,
+      position: currentMembersCount + 1, // Provisoire
+      ordreArrivee: currentMembersCount + 1,
     });
 
-    // Check if tontine is now full to trigger the random draw via Service
+    // Si la tontine est complète, déclencher le tirage au sort aléatoire via le service
     const updatedCount = await Membre.countDocuments({ tontineId: tontine._id });
     
     if (updatedCount === tontine.nombreMembres) {
@@ -103,8 +112,8 @@ exports.getMyTontines = async (req, res) => {
     const membres = await Membre.find({ userId: req.user.id }).populate('tontineId');
 
     const tontines = membres
-        .filter(m => m.tontineId !== null)
-        .map((m) => m.tontineId);
+      .filter((m) => m.tontineId !== null)
+      .map((m) => m.tontineId);
 
     res.status(200).json({
       success: true,

@@ -37,6 +37,11 @@ const tontineSchema = new mongoose.Schema({
     type: Number,
     default: 1,
   },
+  typeTirage: {
+    type: String,
+    enum: ['aleatoire', 'ordre_arrivee'],
+    default: 'aleatoire',
+  },
   code: {
     type: String,
     unique: true,

@@ -15,6 +15,10 @@ const membreSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  ordreArrivee: {
+    type: Number,
+    default: 1,
+  },
   aRecu: {
     type: Boolean,
     default: false,
