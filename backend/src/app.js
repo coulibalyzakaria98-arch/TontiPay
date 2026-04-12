@@ -11,14 +11,12 @@ const tontineRoutes = require('./routes/tontineRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const adminRoutes = require('./routes/adminRoutes'); // Assuré que c'est là
 
 const app = express();
 
 // Body parser
 app.use(express.json());
-
-// Cookie parser
-// app.use(cookieParser());
 
 // Dev logging middleware
 if (process.env.NODE_ENV === 'development') {
@@ -26,7 +24,9 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Set security headers
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false // Utile pour afficher les preuves d'images locales
+}));
 
 // Enable CORS
 app.use(cors());
@@ -45,4 +45,3 @@ app.get('/', (req, res) => {
 });
 
 module.exports = app;
-.exports = app;
