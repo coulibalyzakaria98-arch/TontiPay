@@ -14,7 +14,7 @@ import {
   XCircle
 } from 'lucide-react';
 import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import PaymentModal from '../components/PaymentModal';
 
 const TontineDetails = () => {
@@ -51,7 +51,7 @@ const TontineDetails = () => {
     try {
       await api.patch(`/payments/${paymentId}/validate`, { status: 'approved' });
       await fetchDetails();
-    } catch (error) {
+    } catch {
       alert("Erreur lors de la validation");
     } finally {
       setActionLoading(null);
@@ -67,7 +67,7 @@ const TontineDetails = () => {
     try {
       await api.patch(`/payments/${paymentId}/validate`, { status: 'rejected', reason });
       await fetchDetails();
-    } catch (error) {
+    } catch {
       alert("Erreur lors du rejet");
     } finally {
       setActionLoading(null);

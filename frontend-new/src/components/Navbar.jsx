@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Bell, 
@@ -13,20 +13,20 @@ const Navbar = () => {
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     try {
       const response = await api.get('/notifications/unread-count');
       setUnreadCount(response.data.count);
-    } catch (error) {
+    } catch {
       // Silently fail
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchUnreadCount();
+    setTimeout(() => fetchUnreadCount(), 0);
     const interval = setInterval(fetchUnreadCount, 60000);
     return () => clearInterval(interval);
-  }, [location.pathname]);
+  }, [fetchUnreadCount, location.pathname]);
 
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },

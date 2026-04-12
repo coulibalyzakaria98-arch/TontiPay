@@ -20,7 +20,6 @@ const Payments = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [filter, setFilter] = useState('all');
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);

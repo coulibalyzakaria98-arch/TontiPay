@@ -56,7 +56,7 @@ const AdminDashboard = () => {
     try {
       await api.put(`/admin/users/${userId}/status`, { status: newStatus });
       setUsers(users.map(u => u._id === userId ? { ...u, status: newStatus } : u));
-    } catch (err) {
+    } catch {
       alert("Erreur lors de la mise à jour du statut");
     }
   };
@@ -68,7 +68,7 @@ const AdminDashboard = () => {
     try {
       await api.put(`/admin/users/${userId}/role`, { role: newRole });
       setUsers(users.map(u => u._id === userId ? { ...u, role: newRole } : u));
-    } catch (err) {
+    } catch {
       alert("Erreur lors du changement de rôle");
     }
   };
@@ -79,7 +79,7 @@ const AdminDashboard = () => {
     try {
       await api.delete(`/admin/tontines/${tontineId}`);
       setTontines(tontines.filter(t => t._id !== tontineId));
-    } catch (err) {
+    } catch {
       alert("Erreur lors de la suppression");
     }
   };
@@ -88,7 +88,7 @@ const AdminDashboard = () => {
     try {
       await api.put(`/payments/${paymentId}/validate`);
       fetchData(); // Refresh all data
-    } catch (err) {
+    } catch {
       alert("Erreur lors de la validation");
     }
   };
@@ -98,7 +98,7 @@ const AdminDashboard = () => {
     try {
       await api.put(`/payments/${paymentId}/reject`);
       fetchData(); // Refresh all data
-    } catch (err) {
+    } catch {
       alert("Erreur lors du rejet");
     }
   };
