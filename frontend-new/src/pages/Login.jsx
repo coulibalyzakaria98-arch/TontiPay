@@ -23,6 +23,8 @@ const Login = () => {
     setLoading(true);
     setError('');
 
+    console.log("Tentative de login vers:", api.defaults.baseURL);
+
     try {
       await login(formData);
       navigate(from, { replace: true });

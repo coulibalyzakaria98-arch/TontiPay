@@ -30,7 +30,11 @@ app.use(helmet({
 
 // Enable CORS
 app.use(cors({
-  origin: ['https://tonti-pay-p4a8.vercel.app', 'http://localhost:5173'],
+  origin: [
+    'https://tonti-pay-p4a8.vercel.app', 
+    'https://tonti-pay-p4a8-git-main-coulibalyzakaria98-archs-projects.vercel.app',
+    'http://localhost:5173'
+  ],
   credentials: true
 }));
 
