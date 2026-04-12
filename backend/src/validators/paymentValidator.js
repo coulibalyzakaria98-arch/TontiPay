@@ -3,7 +3,7 @@ const { z } = require('zod');
 const createPaymentSchema = z.object({
   tontineId: z.string().min(24, "ID Tontine invalide"),
   amount: z.number().positive("Le montant doit être supérieur à 0"),
-  method: z.enum(['orange', 'mtn', 'moov', 'wave', 'cash'], {
+  method: z.enum(['orange', 'mtn', 'moov'], {
     errorMap: () => ({ message: "Méthode de paiement invalide" })
   }),
   reference: z.string().min(3, "La référence est obligatoire"),

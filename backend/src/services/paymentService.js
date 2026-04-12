@@ -23,7 +23,6 @@ class PaymentService {
       amount: data.amount,
       method: data.method,
       reference: data.reference,
-      tour: tontine.tourActuel,
       status: 'pending'
     });
 
@@ -49,11 +48,6 @@ class PaymentService {
 
     if (!payment) throw new Error("Paiement introuvable");
 
-    // Sécurité: Seul le créateur peut valider
-    if (payment.tontine.createur.toString() !== adminId) {
-      throw new Error("Non autorisé : Seul l'administrateur de cette tontine peut effectuer cette action");
-    }
-
     if (payment.status !== 'pending') {
       throw new Error(`Ce paiement a déjà été traité (Statut: ${payment.status})`);
     }
@@ -70,9 +64,6 @@ class PaymentService {
 
       // 2. Générer le PDF
       payment.receiptUrl = await generateReceipt(payment);
-
-      // 3. Avancer le tour si nécessaire
-      await tontineService.checkAndAdvanceRound(payment.tontine._id);
     } else {
       payment.rejectionReason = reason;
     }

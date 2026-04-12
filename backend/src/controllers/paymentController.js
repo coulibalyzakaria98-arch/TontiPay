@@ -19,6 +19,11 @@ exports.createPayment = async (req, res) => {
 
 exports.validatePayment = async (req, res) => {
   try {
+    // Vérifier que l'utilisateur est admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: "Accès refusé : Rôle administrateur requis" });
+    }
+
     const validatedData = validatePaymentSchema.parse(req.body);
     const payment = await paymentService.validatePayment(
       req.user.id, 
@@ -73,6 +78,17 @@ exports.getMyHistory = async (req, res) => {
 
 exports.getTontinePayments = async (req, res) => {
     try {
+      const Tontine = require('../models/Tontine');
+      const tontine = await Tontine.findById(req.params.tontineId);
+      if (!tontine) {
+        return res.status(404).json({ success: false, error: "Tontine non trouvée" });
+      }
+
+      // Vérifier si l'utilisateur est admin ou créateur de la tontine
+      if (req.user.role !== 'admin' && tontine.createur.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, error: "Accès refusé" });
+      }
+
       const payments = await Payment.find({ tontine: req.params.tontineId })
         .populate('user', 'nom prenom telephone')
         .sort('-createdAt');
