@@ -14,11 +14,11 @@ const paymentSchema = new mongoose.Schema({
   amount: {
     type: Number,
     required: true,
-    min: 0,
+    min: 1,
   },
   method: {
     type: String,
-    enum: ['orange', 'mtn', 'moov'],
+    enum: ['orange', 'mtn', 'moov', 'wave', 'cash'],
     required: true,
   },
   reference: {
@@ -42,6 +42,10 @@ const paymentSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true,
+  },
+  tour: {
+    type: Number,
+    required: true,
   },
   validatedAt: {
     type: Date,

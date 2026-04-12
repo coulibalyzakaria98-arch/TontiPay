@@ -3,12 +3,19 @@ const { createPaymentSchema, validatePaymentSchema } = require('../validators/pa
 const path = require('path');
 const fs = require('fs');
 
+/**
+ * Soumettre un nouveau paiement
+ */
 exports.createPayment = async (req, res) => {
   try {
     const validatedData = createPaymentSchema.parse(req.body);
     const payment = await paymentService.createPayment(req.user.id, validatedData);
 
-    res.status(201).json({ success: true, data: payment });
+    res.status(201).json({
+      success: true,
+      message: "Paiement soumis avec succès. En attente de validation.",
+      data: payment
+    });
   } catch (error) {
     if (error.name === 'ZodError') {
       return res.status(400).json({ success: false, errors: error.errors });
@@ -17,13 +24,11 @@ exports.createPayment = async (req, res) => {
   }
 };
 
+/**
+ * Valider ou rejeter (Admin)
+ */
 exports.validatePayment = async (req, res) => {
   try {
-    // Vérifier que l'utilisateur est admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: "Accès refusé : Rôle administrateur requis" });
-    }
-
     const validatedData = validatePaymentSchema.parse(req.body);
     const payment = await paymentService.validatePayment(
       req.user.id, 
@@ -31,7 +36,11 @@ exports.validatePayment = async (req, res) => {
       validatedData
     );
 
-    res.json({ success: true, data: payment });
+    res.json({
+      success: true,
+      message: `Paiement ${payment.status === 'approved' ? 'validé' : 'rejeté'} avec succès.`,
+      data: payment
+    });
   } catch (error) {
     if (error.name === 'ZodError') {
       return res.status(400).json({ success: false, errors: error.errors });
@@ -40,23 +49,26 @@ exports.validatePayment = async (req, res) => {
   }
 };
 
+/**
+ * Télécharger le reçu
+ */
 exports.getReceipt = async (req, res) => {
   try {
     const Payment = require('../models/Payment');
     const payment = await Payment.findById(req.params.id);
 
     if (!payment || !payment.receiptUrl) {
-      return res.status(404).json({ success: false, error: "Reçu non disponible" });
+      return res.status(404).json({ success: false, error: "Reçu introuvable." });
     }
 
-    // Sécurité: Proprio ou Admin/Créateur uniquement
+    // Sécurité: Seul le proprio ou l'admin peut voir
     if (payment.user.toString() !== req.user.id && req.user.role !== 'admin') {
-        // Optionnel: Vérifier si c'est l'admin de la tontine
+      return res.status(403).json({ success: false, error: "Accès refusé." });
     }
 
     const filePath = path.join(__dirname, '../../', payment.receiptUrl);
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, error: "Fichier introuvable" });
+      return res.status(404).json({ success: false, error: "Fichier physique introuvable." });
     }
 
     res.contentType("application/pdf");
@@ -66,35 +78,15 @@ exports.getReceipt = async (req, res) => {
   }
 };
 
+/**
+ * Historique personnel
+ */
 exports.getMyHistory = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const history = await paymentService.getMyHistory(req.user.id, page);
-    res.json({ success: true, ...history });
+    const result = await paymentService.getHistory(req.user.id, page);
+    res.json({ success: true, ...result });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-exports.getTontinePayments = async (req, res) => {
-    try {
-      const Tontine = require('../models/Tontine');
-      const tontine = await Tontine.findById(req.params.tontineId);
-      if (!tontine) {
-        return res.status(404).json({ success: false, error: "Tontine non trouvée" });
-      }
-
-      // Vérifier si l'utilisateur est admin ou créateur de la tontine
-      if (req.user.role !== 'admin' && tontine.createur.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, error: "Accès refusé" });
-      }
-
-      const payments = await Payment.find({ tontine: req.params.tontineId })
-        .populate('user', 'nom prenom telephone')
-        .sort('-createdAt');
-  
-      res.json({ success: true, data: payments });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
-    }
-  };

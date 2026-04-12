@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const auditLogSchema = new mongoose.Schema({
   action: {
     type: String,
-    required: true, // ex: "PAYMENT_VALIDATED", "PAYMENT_REJECTED"
+    required: true, // e.g., "PAYMENT_APPROVED", "PAYMENT_REJECTED"
   },
   performedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -14,12 +14,8 @@ const auditLogSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
   },
-  resourceType: {
-    type: String,
-    default: 'Payment',
-  },
   details: {
-    type: mongoose.Schema.Types.Mixed,
+    type: String,
   },
   timestamp: {
     type: Date,
