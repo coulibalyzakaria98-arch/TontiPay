@@ -79,6 +79,18 @@ exports.getReceipt = async (req, res) => {
 };
 
 /**
+ * Récupérer tous les paiements (Admin)
+ */
+exports.getAllPayments = async (req, res) => {
+  try {
+    const payments = await paymentService.getAllPayments();
+    res.json({ success: true, data: payments });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
  * Historique personnel
  */
 exports.getMyHistory = async (req, res) => {

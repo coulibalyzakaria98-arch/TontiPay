@@ -85,8 +85,9 @@ const AdminDashboard = () => {
   };
 
   const handleValidatePayment = async (paymentId) => {
+    if (!window.confirm("Valider ce paiement ?")) return;
     try {
-      await api.put(`/payments/${paymentId}/validate`);
+      await api.patch(`/payments/${paymentId}/validate`, { status: 'valide' });
       fetchData(); // Refresh all data
     } catch {
       alert("Erreur lors de la validation");
@@ -94,9 +95,10 @@ const AdminDashboard = () => {
   };
 
   const handleRejectPayment = async (paymentId) => {
-    if (!window.confirm("Refuser ce paiement ?")) return;
+    const reason = window.prompt("Motif du rejet (obligatoire) :");
+    if (!reason) return;
     try {
-      await api.put(`/payments/${paymentId}/reject`);
+      await api.patch(`/payments/${paymentId}/validate`, { status: 'rejete', reason });
       fetchData(); // Refresh all data
     } catch {
       alert("Erreur lors du rejet");
@@ -350,24 +352,24 @@ const AdminDashboard = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
-                          <p className="text-sm font-black text-gray-900">+{p.montant.toLocaleString()} FCFA</p>
+                          <p className="text-sm font-black text-gray-900">+{p.amount.toLocaleString()} FCFA</p>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{p.moyenPaiement}</span>
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{p.method}</span>
                             <span className="text-[10px] font-mono text-gray-300">Ref: {p.reference}</span>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full ${
-                          p.statut === 'validated' ? 'bg-green-100 text-green-700' : 
-                          p.statut === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                          p.status === 'valide' ? 'bg-green-100 text-green-700' : 
+                          p.status === 'en_attente' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                         }`}>
-                          {p.statut === 'pending' && <Clock size={10} className="animate-spin" />}
-                          {p.statut.toUpperCase()}
+                          {p.status === 'en_attente' && <Clock size={10} className="animate-spin" />}
+                          {p.status.toUpperCase()}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {p.statut === 'pending' ? (
+                        {p.status === 'en_attente' ? (
                           <div className="flex justify-end gap-2">
                             <button 
                               onClick={() => handleRejectPayment(p._id)}
@@ -385,7 +387,7 @@ const AdminDashboard = () => {
                             </button>
                           </div>
                         ) : (
-                          <p className="text-[10px] text-gray-300 italic font-medium">Traité le {new Date(p.dateValidation || p.datePaiement).toLocaleDateString()}</p>
+                          <p className="text-[10px] text-gray-300 italic font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
                         )}
                       </td>
                     </tr>

@@ -1,7 +1,17 @@
 import axios from 'axios';
 
+// Détection intelligente de l'URL API
+const isLocal = window.location.hostname === 'localhost';
+
+const baseURL = isLocal 
+  ? (import.meta.env.VITE_API_URL || 'http://localhost:5000/api')
+  : 'https://tontipay.onrender.com/api';
+
+console.log("🚀 API Base URL:", baseURL);
+console.log("📍 Environment:", isLocal ? "Local" : "Production");
+
 const api = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL || 'https://tontipay.onrender.com') + '/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },

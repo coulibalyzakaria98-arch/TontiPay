@@ -102,6 +102,16 @@ class PaymentService {
   }
 
   /**
+   * Récupérer tous les paiements (Admin global)
+   */
+  async getAllPayments() {
+    return Payment.find()
+      .populate('user', 'nom prenom email telephone')
+      .populate('tontine', 'nom')
+      .sort('-createdAt');
+  }
+
+  /**
    * Historique paginé
    */
   async getHistory(userId, page = 1, limit = 10) {

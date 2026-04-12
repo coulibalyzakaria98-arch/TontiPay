@@ -113,8 +113,9 @@ exports.getSystemStats = async (req, res) => {
     const tontineCount = await Tontine.countDocuments();
     const activeTontines = await Tontine.countDocuments({ statut: 'en cours' });
     
-    const payments = await Payment.find({ statut: 'validated' });
-    const totalVolume = payments.reduce((acc, curr) => acc + curr.montant, 0);
+    // Correction des champs : status (modèle Payment) et amount
+    const payments = await Payment.find({ status: 'valide' });
+    const totalVolume = payments.reduce((acc, curr) => acc + curr.amount, 0);
 
     res.status(200).json({
       success: true,

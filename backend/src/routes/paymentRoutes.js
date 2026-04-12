@@ -5,13 +5,15 @@ const {
   validatePayment,
   getReceipt,
   getMyHistory,
-  getTontinePayments
+  getTontinePayments,
+  getAllPayments
 } = require('../controllers/paymentController');
-const { protect } = require('../middlewares/authMiddleware');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 
 router.use(protect);
 
 router.post('/', createPayment);
+router.get('/', authorize('admin'), getAllPayments);
 router.get('/my-history', getMyHistory);
 router.get('/tontine/:tontineId', getTontinePayments);
 router.get('/:id/receipt', getReceipt);

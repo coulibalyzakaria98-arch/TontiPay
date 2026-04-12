@@ -10,11 +10,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     setLoading(true);
     try {
-      const response = await authService.login(credentials);
-      // On utilise response.data car authService renvoie déjà response.data.data via getCurrentUser
-      // mais ici le login renvoie { success, token, data }
-      setUser(response.data);
-      return response;
+      const data = await authService.login(credentials);
+      // authService.login renvoie déjà response.data (qui contient {success, token, data})
+      // On veut stocker uniquement l'objet utilisateur dans le state
+      setUser(data.data);
+      return data;
     } finally {
       setLoading(false);
     }
@@ -23,9 +23,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     setLoading(true);
     try {
-      const response = await authService.register(userData);
-      setUser(response.data);
-      return response;
+      const data = await authService.register(userData);
+      setUser(data.data);
+      return data;
     } finally {
       setLoading(false);
     }
