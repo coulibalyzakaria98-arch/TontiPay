@@ -4,7 +4,8 @@ const {
   createPayment,
   validatePayment,
   getReceipt,
-  getMyHistory
+  getMyHistory,
+  getTontinePayments
 } = require('../controllers/paymentController');
 const { protect } = require('../middlewares/authMiddleware');
 
@@ -12,6 +13,7 @@ router.use(protect);
 
 router.post('/', createPayment);
 router.get('/my-history', getMyHistory);
+router.get('/tontine/:tontineId', getTontinePayments);
 router.get('/:id/receipt', getReceipt);
 router.patch('/:id/validate', validatePayment);
 

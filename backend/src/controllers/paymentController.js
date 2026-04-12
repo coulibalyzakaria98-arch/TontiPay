@@ -90,3 +90,12 @@ exports.getMyHistory = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+exports.getTontinePayments = async (req, res) => {
+  try {
+    const payments = await paymentService.getTontinePayments(req.user.id, req.params.tontineId, req.user.role);
+    res.json({ success: true, data: payments });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};

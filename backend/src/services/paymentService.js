@@ -113,6 +113,23 @@ class PaymentService {
     const total = await Payment.countDocuments({ user: userId });
     return { payments, total, pages: Math.ceil(total / limit) };
   }
+
+  async getTontinePayments(userId, tontineId, role) {
+    const tontine = await Tontine.findById(tontineId);
+    if (!tontine) throw new Error('Tontine introuvable');
+
+    // Si l'utilisateur est l'admin de la tontine, on retourne tous les paiements.
+    if (role === 'admin' || tontine.createur.toString() === userId) {
+      return Payment.find({ tontine: tontineId })
+        .populate('user', 'nom prenom telephone')
+        .sort('-createdAt');
+    }
+
+    // Les membres ne voient que leurs propres paiements dans cette tontine.
+    return Payment.find({ tontine: tontineId, user: userId })
+      .populate('user', 'nom prenom telephone')
+      .sort('-createdAt');
+  }
 }
 
 module.exports = new PaymentService();
