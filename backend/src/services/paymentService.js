@@ -1,37 +1,36 @@
 const Payment = require('../models/Payment');
-const Tontine = require('../models/Tontine');
+const AuditLog = require('../models/AuditLog');
 const Notification = require('../models/Notification');
+const Tontine = require('../models/Tontine');
 const tontineService = require('./tontineService');
-const { generateReceiptPDF } = require('../utils/receipts/pdfGenerator');
-const { v4: uuidv4 } = require('uuid');
+const { generateReceipt } = require('../utils/pdfGenerator');
 
 class PaymentService {
   /**
-   * Crée un nouveau paiement en attente
+   * Crée une demande de paiement
    */
-  async createPayment(userId, paymentData) {
-    const tontine = await Tontine.findById(paymentData.tontineId);
-    if (!tontine) throw new Error('Tontine non trouvée');
+  async createPayment(userId, data) {
+    const tontine = await Tontine.findById(data.tontineId);
+    if (!tontine) throw new Error("Tontine non trouvée");
 
-    // Vérifier si un paiement avec la même référence existe déjà
-    const existingRef = await Payment.findOne({ reference: paymentData.reference });
-    if (existingRef) throw new Error('Cette référence de transaction a déjà été soumise');
+    // Vérifier si la référence est déjà utilisée
+    const existingRef = await Payment.findOne({ reference: data.reference });
+    if (existingRef) throw new Error("Cette référence de transaction a déjà été soumise");
 
     const payment = await Payment.create({
       user: userId,
-      tontine: paymentData.tontineId,
-      montant: paymentData.montant,
-      reference: paymentData.reference,
-      moyenPaiement: paymentData.moyenPaiement,
+      tontine: data.tontineId,
+      amount: data.amount,
+      method: data.method,
+      reference: data.reference,
       tour: tontine.tourActuel,
-      preuve: paymentData.preuve || null,
-      statut: 'pending',
+      status: 'pending'
     });
 
-    // Notification pour l'administrateur (le créateur de la tontine)
+    // Notifier le créateur de la tontine (Admin)
     await Notification.create({
       user: tontine.createur,
-      message: `🔔 Nouveau paiement de ${payment.montant.toLocaleString()} FCFA à valider pour "${tontine.nom}".`,
+      message: `🔔 Nouveau paiement de ${payment.amount.toLocaleString()} FCFA à valider pour "${tontine.nom}".`,
       type: 'info'
     });
 
@@ -39,75 +38,81 @@ class PaymentService {
   }
 
   /**
-   * Valide ou rejette un paiement
+   * Valide ou rejette un paiement (Admin Only)
    */
   async validatePayment(adminId, paymentId, validationData) {
+    const { status, reason } = validationData;
+
     const payment = await Payment.findById(paymentId)
-      .populate('tontine')
-      .populate('user', 'nom prenom telephone');
+      .populate('user', 'nom prenom email telephone')
+      .populate('tontine', 'nom createur montant');
 
-    if (!payment) throw new Error('Paiement non trouvé');
+    if (!payment) throw new Error("Paiement introuvable");
 
-    // Vérification : L'admin est-il le créateur de la tontine ?
+    // Sécurité: Seul le créateur peut valider
     if (payment.tontine.createur.toString() !== adminId) {
-      throw new Error('Non autorisé : Seul l\'administrateur de cette tontine peut valider ce paiement');
+      throw new Error("Non autorisé : Seul l'administrateur de cette tontine peut effectuer cette action");
     }
 
-    if (payment.statut !== 'pending') {
-      throw new Error(`Ce paiement est déjà ${payment.statut}`);
+    if (payment.status !== 'pending') {
+      throw new Error(`Ce paiement a déjà été traité (Statut: ${payment.status})`);
     }
 
-    const { statut, reason } = validationData;
-    
-    payment.statut = statut;
-    payment.dateValidation = new Date();
-    
-    if (statut === 'rejected') {
-      payment.reason = reason || 'Référence invalide ou preuve insuffisante.';
-    } else {
-      // Générer l'ID de reçu unique : PAY-ANNÉE-4derniersUUID
+    payment.status = status;
+    payment.validatedAt = new Date();
+    payment.validatedBy = adminId;
+
+    if (status === 'approved') {
+      // 1. Générer un ID de reçu unique: PAY-2026-XXXX
       const year = new Date().getFullYear();
-      const shortId = uuidv4().substring(0, 4).toUpperCase();
-      payment.receiptId = `PAY-${year}-${shortId}`;
-      
-      // Générer le PDF
-      payment.receiptUrl = await generateReceiptPDF(payment);
-      
-      // Vérifier si la tontine doit avancer au tour suivant
+      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      payment.receiptId = `PAY-${year}-${randomPart}`;
+
+      // 2. Générer le PDF
+      payment.receiptUrl = await generateReceipt(payment);
+
+      // 3. Avancer le tour si nécessaire
       await tontineService.checkAndAdvanceRound(payment.tontine._id);
+    } else {
+      payment.rejectionReason = reason;
     }
 
     await payment.save();
 
-    // Notification pour l'utilisateur
-    const statusEmoji = statut === 'approved' ? '✅' : '❌';
-    const statusText = statut === 'approved' ? 'validé' : 'rejeté';
-    
+    // 4. Audit Log
+    await AuditLog.create({
+      action: status === 'approved' ? 'PAYMENT_APPROVED' : 'PAYMENT_REJECTED',
+      performedBy: adminId,
+      resourceId: payment._id,
+      details: { reason, receiptId: payment.receiptId }
+    });
+
+    // 5. Notification Utilisateur
     await Notification.create({
       user: payment.user._id,
-      message: `${statusEmoji} Votre paiement pour "${payment.tontine.nom}" a été ${statusText}.${statut === 'rejected' ? ` Motif : ${reason}` : ''}`,
-      type: statut === 'approved' ? 'payment_validated' : 'payment_rejected'
+      message: status === 'approved' 
+        ? `✅ Votre paiement de ${payment.amount.toLocaleString()} FCFA pour "${payment.tontine.nom}" a été validé ! Reçu disponible.`
+        : `❌ Votre paiement pour "${payment.tontine.nom}" a été rejeté. Motif : ${reason}`,
+      type: status === 'approved' ? 'payment_validated' : 'payment_rejected'
     });
 
     return payment;
   }
 
   /**
-   * Récupère l'historique des paiements d'un utilisateur
+   * Récupère l'historique paginé d'un utilisateur
    */
-  async getMyPayments(userId) {
-    return await Payment.find({ user: userId })
-      .populate('tontine', 'nom montant')
-      .sort('-createdAt');
-  }
+  async getMyHistory(userId, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const payments = await Payment.find({ user: userId })
+      .populate('tontine', 'nom')
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit);
+    
+    const total = await Payment.countDocuments({ user: userId });
 
-  /**
-   * Récupère tous les paiements d'une tontine (pour l'admin)
-   */
-  async getTontinePayments(tontineId) {
-    return await Payment.find({ tontine: tontineId })
-      .populate('user', 'nom prenom telephone')
-      .sort('-createdAt');
+    return { payments, total, pages: Math.ceil(total / limit) };
   }
 }
 

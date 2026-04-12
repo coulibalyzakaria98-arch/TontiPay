@@ -1,70 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { X, Banknote, Smartphone, Hash, Loader2, CheckCircle2, List, Info } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  X, 
+  Banknote, 
+  Hash, 
+  CreditCard, 
+  Loader2, 
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 import api from '../services/api';
 
-const PaymentModal = ({ isOpen, onClose, tontine: initialTontine, onSuccess }) => {
+const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    amount: tontine?.montant || 0,
+    method: 'orange',
+    reference: '',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [myTontines, setMyTontines] = useState([]);
-  const [formData, setFormData] = useState({
-    tontineId: initialTontine?._id || '',
-    montant: initialTontine?.montant || '',
-    moyenPaiement: 'Orange Money',
-    reference: '',
-  });
-
-  useEffect(() => {
-    if (isOpen && !initialTontine) {
-      const fetchMyTontines = async () => {
-        try {
-          const res = await api.get('/tontines/my-tontines');
-          setMyTontines(res.data.data);
-        } catch (err) {
-          console.error("Erreur chargement tontines", err);
-        }
-      };
-      fetchMyTontines();
-    }
-  }, [isOpen, initialTontine]);
-
-  const getReferencePlaceholder = () => {
-    switch (formData.moyenPaiement) {
-      case 'Orange Money': return "Ex: PP230415.1245.A00123";
-      case 'MTN Mobile Money': return "Ex: 1234567890 (ID de transaction)";
-      case 'Moov Money': return "Ex: REF-MOOV-987654";
-      case 'Espèces / Remise directe': return "Ex: Remis en mains propres à l'admin";
-      default: return "Saisissez la référence";
-    }
-  };
-
-  const getReferenceHelpText = () => {
-    if (formData.moyenPaiement === 'Espèces / Remise directe') {
-      return "Précisez la date ou le lieu de la remise.";
-    }
-    return "Copiez l'ID reçu par SMS après votre dépôt.";
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.tontineId) return setError("Veuillez choisir une tontine");
-    
     setLoading(true);
     setError('');
 
     try {
       await api.post('/payments', {
-        ...formData,
-        montant: Number(formData.montant),
+        tontineId: tontine._id,
+        amount: Number(formData.amount),
+        method: formData.method,
+        reference: formData.reference,
       });
+      
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
+        setFormData({ ...formData, reference: '' });
         onSuccess();
         onClose();
       }, 2000);
     } catch (err) {
-      setError(err.response?.data?.error || "Une erreur est survenue");
+      setError(err.response?.data?.error || 'Erreur lors de la soumission');
     } finally {
       setLoading(false);
     }
@@ -73,124 +50,98 @@ const PaymentModal = ({ isOpen, onClose, tontine: initialTontine, onSuccess }) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative">
-        <button 
-          onClick={onClose}
-          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X size={20} />
-        </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200">
+        
+        {/* Header */}
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-black text-gray-900 tracking-tight">Déclarer un paiement</h2>
+            <p className="text-xs text-gray-500 font-medium">{tontine?.nom}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <X size={20} className="text-gray-400" />
+          </button>
+        </div>
 
         {success ? (
-          <div className="p-12 text-center">
-            <div className="bg-green-100 text-green-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="p-12 flex flex-col items-center text-center space-y-4">
+            <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center animate-bounce">
               <CheckCircle2 size={40} />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Paiement Déclaré !</h2>
-            <p className="text-gray-500 text-sm">L'administrateur de la tontine a été notifié et va vérifier votre transaction.</p>
+            <h3 className="text-xl font-black text-gray-900">Demande envoyée !</h3>
+            <p className="text-gray-500 text-sm font-medium">Votre paiement est en attente de validation par l'administrateur.</p>
           </div>
         ) : (
-          <div className="p-8">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Déclarer un paiement</h2>
-              <p className="text-gray-500 mt-1 text-sm">Informez l'administrateur de votre dépôt.</p>
-            </div>
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold border border-red-100 flex items-center gap-2">
+                <AlertCircle size={16} />
+                {error}
+              </div>
+            )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs border border-red-100">
-                  {error}
-                </div>
-              )}
-
-              {/* Sélection de la Tontine */}
-              {!initialTontine && (
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase ml-1 flex items-center gap-2">
-                    <List size={14} /> Choisir la Tontine
-                  </label>
-                  <select
+            <div className="space-y-4">
+              {/* Montant */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Montant versé (FCFA)</label>
+                <div className="relative">
+                  <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input 
+                    type="number" 
                     required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none text-gray-900 shadow-sm font-bold"
-                    value={formData.tontineId}
-                    onChange={(e) => {
-                      const selected = myTontines.find(t => t._id === e.target.value);
-                      setFormData({ 
-                        ...formData, 
-                        tontineId: e.target.value,
-                        montant: selected ? selected.montant : ''
-                      });
-                    }}
+                    value={formData.amount}
+                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Méthode */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Moyen de paiement</label>
+                <div className="relative">
+                  <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <select 
+                    value={formData.method}
+                    onChange={(e) => setFormData({...formData, method: e.target.value})}
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all appearance-none"
                   >
-                    <option value="">Sélectionnez une tontine</option>
-                    {myTontines.map(t => (
-                      <option key={t._id} value={t._id}>{t.nom} ({t.montant} FCFA)</option>
-                    ))}
+                    <option value="orange">Orange Money</option>
+                    <option value="mtn">MTN Mobile Money</option>
+                    <option value="moov">Moov Money</option>
+                    <option value="wave">Wave</option>
+                    <option value="cash">Espèces / Remise directe</option>
                   </select>
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1 flex items-center gap-2">
-                  <Banknote size={14} /> Montant versé
-                </label>
-                <input
-                  type="number"
-                  required
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all font-bold text-lg text-gray-900 shadow-sm !text-black"
-                  value={formData.montant}
-                  onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
-                />
               </div>
 
+              {/* Référence */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1 flex items-center gap-2">
-                  <Smartphone size={14} /> Moyen de paiement
-                </label>
-                <select
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none text-gray-900 shadow-sm font-bold"
-                  value={formData.moyenPaiement}
-                  onChange={(e) => setFormData({ ...formData, moyenPaiement: e.target.value, reference: '' })}
-                >
-                  <option value="Orange Money">Orange Money</option>
-                  <option value="MTN Mobile Money">MTN Mobile Money</option>
-                  <option value="Moov Money">Moov Money</option>
-                  <option value="Wave">Wave</option>
-                  <option value="Espèces / Remise directe">Espèces / Remise directe</option>
-                </select>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Référence de transaction</label>
+                <div className="relative">
+                  <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Ex: ID de transaction Mobile Money"
+                    value={formData.reference}
+                    onChange={(e) => setFormData({...formData, reference: e.target.value})}
+                    className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500 transition-all"
+                  />
+                </div>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1 flex items-center gap-2">
-                  <Hash size={14} /> Référence de transaction
-                </label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-400 text-gray-900 shadow-sm font-medium"
-                  placeholder={getReferencePlaceholder()}
-                  value={formData.reference}
-                  onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                />
-                <p className="text-[10px] text-primary-500 flex items-center gap-1 ml-1 font-medium">
-                  <Info size={10} /> {getReferenceHelpText()}
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-primary-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-primary-700 transition-all flex items-center justify-center space-x-2 disabled:opacity-70"
-              >
-                {loading ? (
-                  <Loader2 className="animate-spin" size={24} />
-                ) : (
-                  <span>Confirmer la déclaration</span>
-                )}
-              </button>
-            </form>
-          </div>
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-primary-600 text-white p-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary-100 hover:bg-primary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin" size={18} /> : 'Soumettre le paiement'}
+            </button>
+          </form>
         )}
       </div>
     </div>

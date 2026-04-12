@@ -49,7 +49,7 @@ const TontineDetails = () => {
   const handleValidate = async (paymentId) => {
     setActionLoading(paymentId);
     try {
-      await api.put(`/payments/${paymentId}/validate`);
+      await api.patch(`/payments/${paymentId}/validate`, { status: 'approved' });
       await fetchDetails();
     } catch (error) {
       alert("Erreur lors de la validation");
@@ -59,10 +59,13 @@ const TontineDetails = () => {
   };
 
   const handleReject = async (paymentId) => {
-    if (!window.confirm("Voulez-vous vraiment rejeter ce paiement ?")) return;
+    const reason = window.prompt("Veuillez saisir le motif du rejet :");
+    if (reason === null) return; // Annulé
+    if (!reason.trim()) return alert("Le motif est obligatoire pour un rejet.");
+
     setActionLoading(paymentId);
     try {
-      await api.put(`/payments/${paymentId}/reject`);
+      await api.patch(`/payments/${paymentId}/validate`, { status: 'rejected', reason });
       await fetchDetails();
     } catch (error) {
       alert("Erreur lors du rejet");
