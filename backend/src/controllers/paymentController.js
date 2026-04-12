@@ -38,7 +38,7 @@ exports.validatePayment = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Paiement ${payment.status === 'approved' ? 'validé' : 'rejeté'} avec succès.`,
+      message: `Paiement ${payment.status === 'valide' ? 'validé' : 'rejeté'} avec succès.`,
       data: payment
     });
   } catch (error) {

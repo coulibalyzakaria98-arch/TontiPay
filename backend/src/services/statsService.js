@@ -14,7 +14,7 @@ class StatsService {
     // 2. Total versé (toutes tontines confondues)
     const approvedPayments = await Payment.find({ 
       user: userId, 
-      statut: 'approved' 
+      status: 'valide' 
     });
     const totalVersé = approvedPayments.reduce((sum, p) => sum + p.montant, 0);
 
@@ -47,7 +47,7 @@ class StatsService {
     const totalCollectéCeTour = await Payment.find({
       tontine: tontineId,
       tour: tontine.tourActuel,
-      statut: 'approved'
+      status: 'valide'
     }).then(payments => payments.reduce((sum, p) => sum + p.montant, 0));
 
     const totalAttenduParTour = tontine.montant * (tontine.nombreMembres - 1);

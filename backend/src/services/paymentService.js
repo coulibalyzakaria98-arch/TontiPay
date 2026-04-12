@@ -23,8 +23,10 @@ class PaymentService {
       amount: data.amount,
       method: data.method,
       reference: data.reference,
+      transactionId: data.transactionId,
+      screenshotUrl: data.screenshotUrl,
       tour: tontine.tourActuel,
-      status: 'pending'
+      status: 'en_attente'
     });
 
     // Notifier l'administrateur
@@ -54,7 +56,7 @@ class PaymentService {
       throw new Error("Non autorisé : Vous n'êtes pas l'administrateur de cette tontine");
     }
 
-    if (payment.status !== 'pending') {
+    if (payment.status !== 'en_attente') {
       throw new Error(`Ce paiement a déjà été traité (Statut actuel: ${payment.status})`);
     }
 
@@ -62,7 +64,7 @@ class PaymentService {
     payment.validatedAt = new Date();
     payment.validatedBy = adminId;
 
-    if (status === 'approved') {
+    if (status === 'valide') {
       // 1. Générer l'ID unique de reçu : PAY-2026-XXXX
       const year = new Date().getFullYear();
       const random = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -81,19 +83,19 @@ class PaymentService {
 
     // 4. Audit Trail
     await AuditLog.create({
-      action: status === 'approved' ? 'PAYMENT_APPROVED' : 'PAYMENT_REJECTED',
+      action: status === 'valide' ? 'PAYMENT_APPROVED' : 'PAYMENT_REJECTED',
       performedBy: adminId,
       resourceId: payment._id,
-      details: status === 'rejected' ? `Raison : ${reason}` : `Reçu ID : ${payment.receiptId}`
+      details: status === 'rejete' ? `Raison : ${reason}` : `Reçu ID : ${payment.receiptId}`
     });
 
     // 5. Notification Utilisateur
     await Notification.create({
       user: payment.user._id,
-      message: status === 'approved' 
+      message: status === 'valide' 
         ? `✅ Votre paiement pour "${payment.tontine.nom}" a été validé. Votre reçu est disponible.`
         : `❌ Votre paiement pour "${payment.tontine.nom}" a été rejeté. Motif : ${reason}`,
-      type: status === 'approved' ? 'payment_validated' : 'payment_rejected'
+      type: status === 'valide' ? 'payment_validated' : 'payment_rejected'
     });
 
     return payment;

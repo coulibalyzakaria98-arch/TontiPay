@@ -50,7 +50,7 @@ const TontineDetails = () => {
   const handleValidate = async (paymentId) => {
     setActionLoading(paymentId);
     try {
-      await api.patch(`/payments/${paymentId}/validate`, { status: 'approved' });
+      await api.patch(`/payments/${paymentId}/validate`, { status: 'valide' });
       await fetchDetails();
     } catch (error) {
       alert("Erreur lors de la validation");
@@ -65,7 +65,7 @@ const TontineDetails = () => {
 
     setActionLoading(paymentId);
     try {
-      await api.patch(`/payments/${paymentId}/validate`, { status: 'rejected', reason });
+      await api.patch(`/payments/${paymentId}/validate`, { status: 'rejete', reason });
       await fetchDetails();
     } catch (error) {
       alert("Erreur lors du rejet");
@@ -155,13 +155,13 @@ const TontineDetails = () => {
         )}
 
         {/* Admin Validation Section */}
-        {isAdmin && payments.some(p => p.status === 'pending') && (
+        {isAdmin && payments.some(p => p.status === 'en_attente') && (
           <section className="space-y-4">
             <h2 className="text-lg font-black text-orange-600 flex items-center gap-2">
               <AlertCircle size={20} /> Paiements à valider
             </h2>
             <div className="space-y-3">
-              {payments.filter(p => p.status === 'pending').map(p => (
+              {payments.filter(p => p.status === 'en_attente').map(p => (
                 <div key={p._id} className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex items-center justify-between shadow-sm">
                   <div>
                     <p className="font-bold text-gray-900">{p.user.prenom} {p.user.nom}</p>
@@ -189,8 +189,8 @@ const TontineDetails = () => {
               payments.map((p) => (
                 <div key={p._id} className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${p.status === 'approved' ? 'bg-green-50 text-green-600' : p.status === 'rejected' ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-400'}`}>
-                      {p.status === 'approved' ? <CheckCircle2 size={20}/> : <Clock size={20}/>}
+                    <div className={`p-2 rounded-lg ${p.status === 'valide' ? 'bg-green-50 text-green-600' : p.status === 'rejete' ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-400'}`}>
+                      {p.status === 'valide' ? <CheckCircle2 size={20}/> : <Clock size={20}/>}
                     </div>
                     <div>
                       <p className="text-sm font-bold text-gray-900">{p.user.prenom} {p.user.nom}</p>
@@ -200,9 +200,9 @@ const TontineDetails = () => {
                   <div className="text-right flex items-center gap-3">
                     <div>
                       <p className="text-sm font-black text-gray-900">{p.amount.toLocaleString()} F</p>
-                      <p className={`text-[10px] font-bold ${p.status === 'approved' ? 'text-green-600' : 'text-orange-500'}`}>{p.status}</p>
+                      <p className={`text-[10px] font-bold ${p.status === 'valide' ? 'text-green-600' : 'text-orange-500'}`}>{p.status}</p>
                     </div>
-                    {p.status === 'approved' && p.receiptId && (
+                    {p.status === 'valide' && p.receiptId && (
                       <button onClick={() => handleDownload(p._id, p.receiptId)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg">
                         <Download size={18} />
                       </button>

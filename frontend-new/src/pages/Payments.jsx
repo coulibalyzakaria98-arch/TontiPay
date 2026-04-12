@@ -67,9 +67,9 @@ const Payments = () => {
 
   const getStatusInfo = (status) => {
     switch (status) {
-      case 'approved':
+      case 'valide':
         return { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Validé', border: 'border-emerald-100' };
-      case 'rejected':
+      case 'rejete':
         return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', label: 'Rejeté', border: 'border-red-100' };
       default:
         return { icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', label: 'En attente', border: 'border-amber-100' };
@@ -132,7 +132,7 @@ const Payments = () => {
                           </div>
                       </div>
 
-                      {p.status === 'approved' && p.receiptId && (
+                      {p.status === 'valide' && p.receiptId && (
                           <button 
                               onClick={() => handleDownloadReceipt(p._id, p.receiptId)}
                               className="bg-primary-600 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-primary-700 transition-all"
@@ -142,7 +142,7 @@ const Payments = () => {
                           </button>
                       )}
 
-                      {p.status === 'rejected' && (
+                      {p.status === 'rejete' && (
                           <div className="flex items-center gap-2 text-red-500 bg-red-50/50 px-3 py-2 rounded-xl border border-red-50">
                               <AlertCircle size={14} />
                               <p className="text-[10px] font-bold">{p.rejectionReason}</p>

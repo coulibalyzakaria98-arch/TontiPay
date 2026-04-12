@@ -15,6 +15,8 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
     amount: tontine?.montant || 0,
     method: 'orange',
     reference: '',
+    transactionId: '',
+    screenshotUrl: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +33,8 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
         amount: Number(formData.amount),
         method: formData.method,
         reference: formData.reference,
+        transactionId: formData.transactionId,
+        screenshotUrl: formData.screenshotUrl || undefined,
       });
       
       setSuccess(true);
@@ -89,8 +93,6 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
                     <option value="orange">Orange Money</option>
                     <option value="mtn">MTN Mobile Money</option>
                     <option value="moov">Moov Money</option>
-                    <option value="wave">Wave</option>
-                    <option value="cash">Espèces / Remise directe</option>
                   </select>
                 </div>
               </div>
@@ -99,7 +101,23 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
                 <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Référence de transaction</label>
                 <div className="relative">
                   <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input type="text" required placeholder="Ex: ID de transaction" value={formData.reference} onChange={(e)=>setFormData({...formData, reference: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500" />
+                  <input type="text" required placeholder="Ex: code de transaction" value={formData.reference} onChange={(e)=>setFormData({...formData, reference: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase ml-1">ID dépôt Mobile Money</label>
+                <div className="relative">
+                  <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input type="text" required placeholder="Ex: 123456789" value={formData.transactionId} onChange={(e)=>setFormData({...formData, transactionId: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Preuve (URL facultative)</label>
+                <div className="relative">
+                  <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input type="url" placeholder="URL de capture d'écran" value={formData.screenshotUrl} onChange={(e)=>setFormData({...formData, screenshotUrl: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500" />
                 </div>
               </div>
             </div>

@@ -18,7 +18,7 @@ const paymentSchema = new mongoose.Schema({
   },
   method: {
     type: String,
-    enum: ['orange', 'mtn', 'moov', 'wave', 'cash'],
+    enum: ['orange', 'mtn', 'moov'],
     required: true,
   },
   reference: {
@@ -27,10 +27,19 @@ const paymentSchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
+  transactionId: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  screenshotUrl: {
+    type: String,
+    trim: true,
+  },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending',
+    enum: ['en_attente', 'valide', 'rejete'],
+    default: 'en_attente',
   },
   rejectionReason: {
     type: String,
