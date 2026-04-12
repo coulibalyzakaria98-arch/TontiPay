@@ -15,7 +15,7 @@ import {
   Download
 } from 'lucide-react';
 import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import PaymentModal from '../components/PaymentModal';
 
 const TontineDetails = () => {
