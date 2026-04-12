@@ -17,7 +17,14 @@ const updateSchema = z.object({
  */
 exports.register = async (req, res) => {
   try {
+    console.log('BODY RECU:', req.body);
     const { nom, prenom, email, telephone, password } = req.body;
+
+    if (!nom || !prenom || !email || !telephone || !password) {
+      console.log('CHAMPS MANQUANTS:', { nom: !!nom, prenom: !!prenom, email: !!email, telephone: !!telephone, password: !!password });
+      return res.status(400).json({ success: false, error: 'Veuillez remplir tous les champs obligatoires' });
+    }
+
     console.log('Tentative d\'inscription pour:', email);
 
     // 1. Vérification manuelle des doublons
