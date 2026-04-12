@@ -18,8 +18,9 @@ const updateSchema = z.object({
 exports.register = async (req, res) => {
   try {
     const { nom, prenom, email, telephone, password } = req.body;
+    console.log('Tentative d\'inscription pour:', email);
 
-    // 1. Vérification manuelle des doublons pour message clair
+    // 1. Vérification manuelle des doublons
     const userExists = await User.findOne({ $or: [{ email }, { telephone }] });
     if (userExists) {
       const field = userExists.email === email ? 'Email' : 'Numéro de téléphone';
@@ -45,6 +46,7 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('ERREUR REGISTER:', error);
     // 3. Gestion des erreurs de validation Mongoose
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(val => val.message);
