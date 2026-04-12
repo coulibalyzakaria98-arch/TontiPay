@@ -93,8 +93,8 @@ const initCronJobs = () => {
           }
         }
         // 3. Vérifier si tout le monde a payé pour passer au tour suivant automatiquement
-        const { checkAndAdvanceRound } = require('../controllers/tontineController');
-        await checkAndAdvanceRound(tontine._id);
+        const tontineService = require('../services/tontineService');
+        await tontineService.checkAndAdvanceRound(tontine._id);
       }
       console.log('--- FIN CRON : Rappels Terminés ---');
     } catch (error) {

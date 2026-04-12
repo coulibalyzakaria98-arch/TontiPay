@@ -1,113 +1,69 @@
 const User = require('../models/User');
-const generateToken = require('../utils/generateToken');
-const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const { z } = require('zod');
 
-// @desc    Register user
-// @route   POST /api/auth/register
-// @access  Public
-exports.register = async (req, res, next) => {
-  try {
-    const { nom, prenom, email, password, telephone } = req.body;
+// Zod schema for profile update
+const updateSchema = z.object({
+  nom: z.string().min(2).optional(),
+  prenom: z.string().min(2).optional(),
+  email: z.string().email("Email invalide").optional(),
+  telephone: z.string().min(8, "Numéro de téléphone trop court").optional(),
+});
 
-    // Create fake user for testing without DB
-    const user = {
-      _id: new mongoose.Types.ObjectId(),
-      nom,
-      prenom,
-      email,
-      telephone,
-      role: 'user'
-    };
-
-    sendTokenResponse(user, 201, res);
-  } catch (err) {
-    res.status(400).json({
-      success: false,
-      error: err.message,
-    });
-  }
-};
-
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
-exports.login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-
-    // Validate email & password
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Veuillez fournir un email et un mot de passe',
-      });
-    }
-
-    // Check for user (fake for testing without DB)
-    let user = null;
-    if (email === 'test@test.com' && password === 'password') {
-      user = {
-        _id: new mongoose.Types.ObjectId(),
-        nom: 'Test',
-        prenom: 'User',
-        email: 'test@test.com',
-        role: 'user'
-      };
-    }
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Identifiants invalides',
-      });
-    }
-
-    sendTokenResponse(user, 200, res);
-  } catch (err) {
-    res.status(400).json({
-      success: false,
-      error: err.message,
-    });
-  }
-};
-
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
-// @access  Private
-exports.getMe = async (req, res, next) => {
+/**
+ * @desc    Get current logged in user
+ * @route   GET /api/auth/me
+ * @access  Private
+ */
+exports.getMe = async (req, res) => {
   const user = await User.findById(req.user.id);
-
-  res.status(200).json({
-    success: true,
-    data: user,
-  });
+  res.json({ success: true, data: user });
 };
 
-// Get token from model, create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
-  // Create token
-  const token = generateToken(user._id);
+/**
+ * @desc    Update user profile
+ * @route   PUT /api/auth/updatedetails
+ * @access  Private
+ */
+exports.updateDetails = async (req, res) => {
+  try {
+    const validatedData = updateSchema.parse(req.body);
 
-  const options = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-  };
+    const user = await User.findByIdAndUpdate(req.user.id, validatedData, {
+      new: true,
+      runValidators: true,
+    });
 
-  if (process.env.NODE_ENV === 'production') {
-    options.secure = true;
+    res.json({ success: true, data: user });
+  } catch (error) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ success: false, errors: error.errors });
+    }
+    res.status(500).json({ success: false, error: error.message });
   }
+};
 
-  res.status(statusCode).cookie('token', token, options).json({
-    success: true,
-    token,
-    user: {
-      id: user._id,
-      nom: user.nom,
-      prenom: user.prenom,
-      email: user.email,
-      role: user.role,
-    },
-  });
+/**
+ * @desc    Update password
+ * @route   PUT /api/auth/updatepassword
+ * @access  Private
+ */
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Check current password
+    const user = await User.findById(req.user.id).select('+password');
+
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(401).json({ success: false, error: 'Mot de passe actuel incorrect' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ success: true, message: 'Mot de passe mis à jour avec succès' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };

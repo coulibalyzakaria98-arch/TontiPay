@@ -1,175 +1,221 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  CreditCard, 
-  ArrowUpRight, 
+  ArrowLeft, 
+  Download, 
   Clock, 
   CheckCircle2, 
   XCircle, 
+  Search,
+  Filter,
   Loader2,
-  Calendar,
-  Wallet,
-  PlusCircle
+  FileText,
+  AlertCircle
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
-import PaymentModal from '../components/PaymentModal';
 
 const Payments = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ totalPaid: 0, pendingCount: 0 });
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const fetchPayments = useCallback(async () => {
-    try {
-      const response = await api.get('/payments/my-payments');
-      const data = response.data.data;
-      setPayments(data);
-
-      // Calculate simple stats
-      const total = data
-        .filter(p => p.statut === 'validated')
-        .reduce((acc, curr) => acc + curr.montant, 0);
-      const pending = data.filter(p => p.statut === 'pending').length;
-      
-      setStats({ totalPaid: total, pendingCount: pending });
-    } catch (err) {
-      console.error("Erreur lors du chargement des paiements", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [filter, setFilter] = useState('all'); // all, approved, pending, rejected
 
   useEffect(() => {
     fetchPayments();
-  }, [fetchPayments]);
+  }, []);
 
-  if (loading && payments.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="animate-spin text-primary-500" size={40} />
-      </div>
-    );
-  }
+  const fetchPayments = async () => {
+    try {
+      const response = await api.get('/payments/my-payments');
+      setPayments(response.data.data);
+    } catch (error) {
+      console.error("Erreur chargement paiements", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadReceipt = async (paymentId, receiptId) => {
+    try {
+      // On ouvre le lien dans un nouvel onglet pour le téléchargement
+      const token = localStorage.getItem('token');
+      const url = `${import.meta.env.VITE_API_URL || 'https://tontipay.onrender.com/api'}/payments/${paymentId}/receipt`;
+      
+      // On utilise fetch pour passer le token d'auth
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', `Recu-${receiptId}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        alert("Erreur lors du téléchargement du reçu.");
+      }
+    } catch (error) {
+      console.error("Erreur téléchargement", error);
+      alert("Impossible de télécharger le reçu.");
+    }
+  };
+
+  const filteredPayments = payments.filter(p => {
+    if (filter === 'all') return true;
+    return p.statut === filter;
+  });
+
+  const getStatusInfo = (status) => {
+    switch (status) {
+      case 'approved':
+        return { 
+            icon: CheckCircle2, 
+            color: 'text-emerald-600', 
+            bg: 'bg-emerald-50', 
+            label: 'Validé',
+            border: 'border-emerald-100'
+        };
+      case 'rejected':
+        return { 
+            icon: XCircle, 
+            color: 'text-red-600', 
+            bg: 'bg-red-50', 
+            label: 'Rejeté',
+            border: 'border-red-100'
+        };
+      default:
+        return { 
+            icon: Clock, 
+            color: 'text-amber-600', 
+            bg: 'bg-amber-50', 
+            label: 'En attente',
+            border: 'border-amber-100'
+        };
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <PaymentModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSuccess={fetchPayments} 
-      />
-
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <header className="bg-white border-b px-6 py-8 sticky top-0 z-20">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <CreditCard className="text-primary-600" /> Mes Transactions
-            </h1>
-            <p className="text-gray-500 text-sm">Suivez l'historique de vos cotisations</p>
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
+        <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/" className="p-2 -ml-2 text-gray-400 hover:text-primary-600 transition-colors">
+              <ArrowLeft size={24} />
+            </Link>
+            <h1 className="text-xl font-black text-gray-900 tracking-tight">Historique des Paiements</h1>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-primary-600 text-white p-2 md:px-4 md:py-2 rounded-full md:rounded-xl shadow-lg hover:bg-primary-700 transition-all flex items-center gap-2"
-          >
-            <PlusCircle size={24} />
-            <span className="hidden md:inline font-bold">Déclarer un paiement</span>
-          </button>
+          <div className="relative">
+            <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">
+                {payments.length}
+            </span>
+            <FileText className="text-gray-300" size={24} />
+          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-4 md:p-6 space-y-8 mt-4">
+      <main className="max-w-3xl mx-auto p-6 space-y-6">
         
-        {/* Quick Stats */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-primary-600 rounded-3xl p-6 text-white shadow-xl flex items-center justify-between overflow-hidden relative">
-            <Wallet size={80} className="absolute -right-4 -bottom-4 text-white/10 rotate-12" />
-            <div className="relative z-10">
-              <p className="text-primary-100 text-xs font-bold uppercase tracking-widest">Total Cotisé</p>
-              <p className="text-3xl font-black mt-1">{stats.totalPaid.toLocaleString()} FCFA</p>
-            </div>
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-              <ArrowUpRight size={24} />
-            </div>
-          </div>
+        {/* Filter Chips */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+          {[
+            { id: 'all', label: 'Tout' },
+            { id: 'approved', label: 'Validés' },
+            { id: 'pending', label: 'En attente' },
+            { id: 'rejected', label: 'Rejetés' }
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setFilter(item.id)}
+              className={`px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
+                filter === item.id 
+                ? 'bg-primary-600 text-white shadow-lg shadow-primary-100 scale-105' 
+                : 'bg-white text-gray-500 border border-gray-100 hover:border-primary-200'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
 
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">En attente</p>
-              <p className="text-3xl font-black text-gray-900 mt-1">{stats.pendingCount}</p>
+        {/* Payments List */}
+        <div className="space-y-4">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <Loader2 className="animate-spin text-primary-500" size={40} />
+              <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Chargement des transactions...</p>
             </div>
-            <div className="bg-amber-50 text-amber-600 p-3 rounded-2xl">
-              <Clock size={24} />
-            </div>
-          </div>
-        </section>
-
-        {/* Transactions List */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-gray-900 px-1">Dernières activités</h2>
-          
-          <div className="space-y-3">
-            {payments.length > 0 ? (
-              payments.map((p) => (
-                <div key={p._id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:border-primary-200 transition-all group">
+          ) : filteredPayments.length > 0 ? (
+            filteredPayments.map((p) => {
+              const status = getStatusInfo(p.statut);
+              return (
+                <div key={p._id} className={`bg-white rounded-3xl p-5 border ${status.border} shadow-sm space-y-4 hover:shadow-md transition-shadow`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-xl transition-colors ${
-                        p.statut === 'validated' ? 'bg-green-50 text-green-600' : 
-                        p.statut === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
-                      }`}>
-                        {p.statut === 'validated' ? <CheckCircle2 size={20} /> : 
-                         p.statut === 'pending' ? <Clock size={20} /> : <XCircle size={20} />}
+                      <div className={`${status.bg} ${status.color} p-3 rounded-2xl`}>
+                        <status.icon size={24} />
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
-                          {p.tontine?.nom || 'Tontine supprimée'}
+                        <h3 className="font-black text-gray-900 leading-tight">{p.tontine?.nom || 'Tontine supprimée'}</h3>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          {new Date(p.datePaiement).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                         </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter bg-gray-50 px-1.5 py-0.5 rounded">
-                            {p.moyenPaiement}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {new Date(p.datePaiement).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                          </span>
-                        </div>
                       </div>
                     </div>
-                    
                     <div className="text-right">
-                      <p className="font-black text-gray-900">-{p.montant.toLocaleString()} FCFA</p>
-                      <p className={`text-[10px] font-black uppercase mt-1 ${
-                        p.statut === 'validated' ? 'text-green-600' : 
-                        p.statut === 'pending' ? 'text-amber-600' : 'text-red-600'
-                      }`}>
-                        {p.statut === 'validated' ? 'Validé' : 
-                         p.statut === 'pending' ? 'En attente' : 'Refusé'}
+                      <p className="font-black text-gray-900">+{p.montant.toLocaleString()} <span className="text-[10px] text-gray-400">FCFA</span></p>
+                      <p className={`text-[9px] font-black uppercase tracking-tighter ${status.color}`}>
+                        {status.label}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-dashed border-gray-100 flex items-center justify-between text-[10px]">
-                    <div className="flex gap-4">
-                      <span className="text-gray-400 font-bold uppercase">Réf: <span className="text-gray-600 font-mono">{p.reference}</span></span>
-                      <span className="text-gray-400 font-bold uppercase">Tour: <span className="text-gray-600">{p.tour}</span></span>
+                  <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="grid grid-cols-2 gap-4 md:flex md:gap-8">
+                        <div>
+                            <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Méthode</p>
+                            <p className="text-xs font-bold text-gray-700">{p.moyenPaiement}</p>
+                        </div>
+                        <div>
+                            <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Référence</p>
+                            <p className="text-xs font-mono font-bold text-gray-700">{p.reference}</p>
+                        </div>
                     </div>
-                    {p.dateValidation && (
-                      <span className="text-gray-300 italic font-medium">Validé le {new Date(p.dateValidation).toLocaleDateString()}</span>
+
+                    {p.statut === 'approved' && p.receiptId && (
+                        <button 
+                            onClick={() => handleDownloadReceipt(p._id, p.receiptId)}
+                            className="bg-primary-50 text-primary-600 px-4 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-primary-600 hover:text-white transition-all group"
+                        >
+                            <Download size={16} className="group-hover:animate-bounce" />
+                            REÇU PDF
+                        </button>
+                    )}
+
+                    {p.statut === 'rejected' && (
+                        <div className="flex items-center gap-2 text-red-500 bg-red-50/50 px-3 py-2 rounded-xl border border-red-50">
+                            <AlertCircle size={14} />
+                            <p className="text-[10px] font-bold italic">{p.reason || 'Données invalides'}</p>
+                        </div>
                     )}
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="bg-white p-12 rounded-3xl text-center border border-dashed border-gray-200">
-                <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar size={32} className="text-gray-300" />
+              );
+            })
+          ) : (
+            <div className="bg-white p-12 rounded-[40px] text-center border-2 border-dashed border-gray-100">
+                <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Filter className="text-gray-300" size={32} />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">Aucune transaction</h3>
-                <p className="text-gray-500 text-sm mt-1">Vos paiements apparaîtront ici dès que vous commencerez à cotiser.</p>
-              </div>
-            )}
-          </div>
-        </section>
+                <p className="text-gray-500 font-medium italic">Aucun paiement trouvé pour ce filtre.</p>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

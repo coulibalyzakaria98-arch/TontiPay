@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
   user: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
   },
@@ -12,7 +12,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['payment_validated', 'payment_rejected', 'reminder', 'late_alert', 'your_turn', 'info'],
+    enum: ['payment_validated', 'payment_rejected', 'your_turn', 'reminder', 'info', 'alert'],
     default: 'info',
   },
   read: {

@@ -14,6 +14,7 @@ const paymentSchema = new mongoose.Schema({
   montant: {
     type: Number,
     required: [true, 'Le montant est obligatoire'],
+    min: [1, 'Le montant doit être supérieur à 0'],
   },
   tour: {
     type: Number,
@@ -22,6 +23,7 @@ const paymentSchema = new mongoose.Schema({
   reference: {
     type: String,
     required: [true, 'La référence de transaction est obligatoire'],
+    unique: true,
   },
   moyenPaiement: {
     type: String,
@@ -29,12 +31,23 @@ const paymentSchema = new mongoose.Schema({
     required: [true, 'Le moyen de paiement est obligatoire'],
   },
   preuve: {
-    type: String, // URL or path to the screenshot
+    type: String, // URL ou chemin de la capture d'écran
   },
   statut: {
     type: String,
-    enum: ['pending', 'validated', 'rejected'],
+    enum: ['pending', 'approved', 'rejected'],
     default: 'pending',
+  },
+  reason: {
+    type: String, // Raison du rejet si applicable
+  },
+  receiptId: {
+    type: String, // ex: PAY-2026-0001
+    unique: true,
+    sparse: true,
+  },
+  receiptUrl: {
+    type: String, // Chemin vers le fichier PDF généré
   },
   datePaiement: {
     type: Date,
@@ -43,6 +56,6 @@ const paymentSchema = new mongoose.Schema({
   dateValidation: {
     type: Date,
   },
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Payment', paymentSchema);

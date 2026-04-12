@@ -8,6 +8,8 @@ import TontineDetails from './pages/TontineDetails';
 import Notifications from './pages/Notifications';
 import AdminDashboard from './pages/AdminDashboard';
 import Payments from './pages/Payments';
+import Profile from './pages/Profile';
+import MyTontines from './pages/MyTontines';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -26,6 +28,12 @@ function App() {
           <Route path="/tontines/create" element={
             <ProtectedRoute>
               <CreateTontine />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/tontines" element={
+            <ProtectedRoute>
+              <MyTontines />
             </ProtectedRoute>
           } />
           
@@ -47,6 +55,12 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
+
           <Route path="/admin" element={
             <ProtectedRoute roles={['admin']}>
               <AdminDashboard />
@@ -58,9 +72,6 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           } />
-          
-          <Route path="/tontines" element={<div className="p-8 font-bold text-gray-900">Page Mes Tontines (Bientôt disponible)</div>} />
-          <Route path="/profile" element={<div className="p-8 font-bold text-gray-900">Page Profil (Bientôt disponible)</div>} />
         </Routes>
       </main>
     </div>

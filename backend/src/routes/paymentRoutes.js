@@ -1,28 +1,20 @@
 const express = require('express');
+const router = express.Router();
 const {
   createPayment,
   validatePayment,
-  rejectPayment,
-  getMyPayments,
-  getAllPayments,
   getTontinePayments,
+  getMyPayments,
+  getReceipt
 } = require('../controllers/paymentController');
+const { protect } = require('../middlewares/authMiddleware');
 
-const router = express.Router();
-
-const { protect, authorize } = require('../middlewares/authMiddleware');
-
-router.use(protect); // All payment routes are protected
+router.use(protect);
 
 router.post('/', createPayment);
 router.get('/my-payments', getMyPayments);
 router.get('/tontine/:tontineId', getTontinePayments);
-
-// Tontine Creator routes (security handled in controller)
-router.put('/:id/validate', validatePayment);
-router.put('/:id/reject', rejectPayment);
-
-// Super Admin only routes
-router.get('/', authorize('admin'), getAllPayments);
+router.get('/:id/receipt', getReceipt);
+router.patch('/:id/validate', validatePayment);
 
 module.exports = router;

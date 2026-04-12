@@ -1,154 +1,114 @@
-const Payment = require('../models/Payment');
-const Notification = require('../models/Notification');
-const Tontine = require('../models/Tontine');
-const { checkAndAdvanceRound } = require('./tontineController');
+const paymentService = require('../services/paymentService');
+const { paymentSchema, validationSchema } = require('../validations/paymentValidation');
+const path = require('path');
+const fs = require('fs');
 
-// @desc    Create a new payment
-// @route   POST /api/payments
-// @access  Private
+/**
+ * @desc    Soumettre un nouveau paiement
+ * @route   POST /api/payments
+ */
 exports.createPayment = async (req, res) => {
   try {
-    const { tontineId, montant, reference, preuve, moyenPaiement } = req.body;
+    // 1. Validation Zod
+    const validatedData = paymentSchema.parse(req.body);
 
-    const tontine = await Tontine.findById(tontineId);
-    if (!tontine) {
-      return res.status(404).json({ success: false, error: 'Tontine non trouvée' });
-    }
-
-    const payment = await Payment.create({
-      user: req.user.id,
-      tontine: tontineId,
-      montant,
-      reference,
-      moyenPaiement,
-      tour: tontine.tourActuel,
-      preuve: preuve || null,
-    });
+    // 2. Appel du Service
+    const payment = await paymentService.createPayment(req.user.id, validatedData);
 
     res.status(201).json({
       success: true,
+      message: "Paiement soumis avec succès. En attente de validation admin.",
       data: payment,
     });
   } catch (error) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ success: false, errors: error.errors });
+    }
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// @desc    Validate a payment (Only Tontine Creator)
-// @route   PUT /api/payments/:id/validate
-// @access  Private
+/**
+ * @desc    Valider ou Rejeter un paiement (Admin Only)
+ * @route   PATCH /api/payments/:id/validate
+ */
 exports.validatePayment = async (req, res) => {
   try {
-    const payment = await Payment.findById(req.params.id).populate('tontine');
+    // 1. Validation Zod
+    const validatedData = validationSchema.parse(req.body);
 
-    if (!payment) {
-      return res.status(404).json({ success: false, error: 'Paiement non trouvé' });
-    }
+    // 2. Appel du Service
+    const payment = await paymentService.validatePayment(
+      req.user.id, 
+      req.params.id, 
+      validatedData
+    );
 
-    // AUTH CHECK: Is the requester the creator of the tontine?
-    if (payment.tontine.createur.toString() !== req.user.id) {
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Seul l\'administrateur (créateur) de cette tontine peut valider les paiements' 
-      });
-    }
-
-    payment.statut = 'validated';
-    payment.dateValidation = new Date();
-    await payment.save();
-
-    // Check if tontine should move to next round
-    await checkAndAdvanceRound(payment.tontine._id);
-
-    // Create Notification for the payer
-    await Notification.create({
-      user: payment.user,
-      message: `✅ Votre paiement de ${payment.montant.toLocaleString()} FCFA pour "${payment.tontine.nom}" a été validé par l'administrateur.`,
-      type: 'payment_validated'
+    res.json({
+      success: true,
+      message: `Paiement ${payment.statut === 'approved' ? 'approuvé' : 'rejeté'} avec succès.`,
+      data: payment,
     });
-
-    res.json({ success: true, data: payment });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ success: false, errors: error.errors });
+    }
+    res.status(400).json({ success: false, error: error.message });
   }
 };
 
-// @desc    Reject a payment (Only Tontine Creator)
-// @route   PUT /api/payments/:id/reject
-// @access  Private
-exports.rejectPayment = async (req, res) => {
+/**
+ * @desc    Télécharger le reçu PDF
+ * @route   GET /api/payments/:id/receipt
+ */
+exports.getReceipt = async (req, res) => {
   try {
-    const payment = await Payment.findById(req.params.id).populate('tontine');
+    const Payment = require('../models/Payment');
+    const payment = await Payment.findById(req.params.id);
 
-    if (!payment) {
-      return res.status(404).json({ success: false, error: 'Paiement non trouvé' });
+    if (!payment || !payment.receiptUrl) {
+      return res.status(404).json({ success: false, error: "Reçu non disponible ou paiement non validé." });
     }
 
-    // AUTH CHECK: Is the requester the creator of the tontine?
-    if (payment.tontine.createur.toString() !== req.user.id) {
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Seul l\'administrateur (créateur) de cette tontine peut rejeter les paiements' 
-      });
+    // Sécurité : Seul le propriétaire ou l'admin peut voir le reçu
+    if (payment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      // Note: On peut aussi vérifier si c'est le créateur de la tontine
+      return res.status(403).json({ success: false, error: "Non autorisé à voir ce reçu." });
     }
 
-    payment.statut = 'rejected';
-    payment.dateValidation = new Date();
-    await payment.save();
+    const filePath = path.join(__dirname, '../../', payment.receiptUrl);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, error: "Fichier du reçu introuvable sur le serveur." });
+    }
 
-    // Create Notification for the payer
-    await Notification.create({
-      user: payment.user,
-      message: `❌ Votre paiement pour "${payment.tontine.nom}" a été rejeté. Veuillez vérifier les détails de la transaction.`,
-      type: 'payment_rejected'
-    });
-
-    res.json({ success: true, data: payment });
+    res.contentType("application/pdf");
+    res.sendFile(filePath);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// @desc    Get payments for a specific tontine
-// @route   GET /api/payments/tontine/:tontineId
-// @access  Private
-exports.getTontinePayments = async (req, res) => {
-  try {
-    const payments = await Payment.find({ tontine: req.params.tontineId })
-      .populate('user', 'nom prenom telephone')
-      .sort('-datePaiement');
-
-    res.json({ success: true, data: payments });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-// @desc    Get current user's payments
-// @route   GET /api/payments/my-payments
-// @access  Private
+/**
+ * @desc    Mes paiements
+ * @route   GET /api/payments/my-payments
+ */
 exports.getMyPayments = async (req, res) => {
   try {
-    const payments = await Payment.find({ user: req.user.id })
-      .populate('tontine', 'nom montant')
-      .sort('-datePaiement');
-
+    const payments = await paymentService.getMyPayments(req.user.id);
     res.json({ success: true, data: payments });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// @desc    Get all payments (Super Admin only)
-// @route   GET /api/payments
-// @access  Private/SuperAdmin
-exports.getAllPayments = async (req, res) => {
+/**
+ * @desc    Paiements d'une tontine (Admin)
+ * @route   GET /api/payments/tontine/:tontineId
+ */
+exports.getTontinePayments = async (req, res) => {
   try {
-    const payments = await Payment.find({})
-      .populate('user', 'nom prenom email telephone')
-      .populate('tontine', 'nom')
-      .sort('-datePaiement');
-
+    const payments = await paymentService.getTontinePayments(req.params.tontineId);
     res.json({ success: true, data: payments });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
