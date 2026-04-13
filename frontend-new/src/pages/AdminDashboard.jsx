@@ -278,7 +278,7 @@ const AdminDashboard = () => {
                       </td>
                     </tr>
                   ))}
-                </tbody>
+                  </tbody>
               </table>
             </div>
           )}
@@ -332,7 +332,7 @@ const AdminDashboard = () => {
                       </td>
                     </tr>
                   ))}
-                </tbody>
+                  </tbody>
               </table>
             </div>
           )}
@@ -376,67 +376,69 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {(paymentFilter === 'all' ? payments : payments.filter(p => p.status === paymentFilter)).map((p) => (
-                      <tr key={p._id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 text-xs">
-                              {p.user.prenom[0]}{p.user.nom[0]}
+                    {payments
+                      .filter(p => paymentFilter === 'all' || p.status === paymentFilter)
+                      .map((p) => (
+                        <tr key={p._id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 text-xs">
+                                {p.user.prenom[0]}{p.user.nom[0]}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-gray-900">{p.user.prenom} {p.user.nom}</p>
+                                <p className="text-[9px] text-gray-400 font-bold uppercase">{p.user.telephone}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-bold text-gray-900">{p.user.prenom} {p.user.nom}</p>
-                              <p className="text-[9px] text-gray-400 font-bold uppercase">{p.user.telephone}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-black text-primary-600">{p.tontine.nom}</p>
+                            <p className="text-[10px] text-gray-400 font-medium italic">Tour n°{p.tour}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <p className="text-sm font-black text-gray-900">+{p.amount.toLocaleString()} FCFA</p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{p.method}</span>
+                                <span className="text-[10px] font-mono text-gray-300">Ref: {p.reference}</span>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-black text-primary-600">{p.tontine.nom}</p>
-                          <p className="text-[10px] text-gray-400 font-medium italic">Tour n°{p.tour}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <p className="text-sm font-black text-gray-900">+{p.amount.toLocaleString()} FCFA</p>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{p.method}</span>
-                              <span className="text-[10px] font-mono text-gray-300">Ref: {p.reference}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full ${
-                            p.status === 'valide' ? 'bg-green-100 text-green-700' : 
-                            p.status === 'en_attente' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
-                          }`}>
-                            {p.status === 'en_attente' && <Clock size={10} className="animate-spin" />}
-                            {p.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          {p.status === 'en_attente' ? (
-                            <div className="flex justify-end gap-2">
-                              <button 
-                                onClick={() => handleRejectPayment(p._id)}
-                                className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                                title="Rejeter"
-                              >
-                                <XCircle size={18} />
-                              </button>
-                              <button 
-                                onClick={() => handleValidatePayment(p._id)}
-                                className="bg-green-600 text-white p-2 rounded-xl shadow-lg hover:bg-green-700 transition-all transform active:scale-95"
-                                title="Valider"
-                              >
-                                <CheckCircle2 size={18} />
-                              </button>
-                            </div>
-                          ) : (
-                            <p className="text-[10px] text-gray-300 italic font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full ${
+                              p.status === 'valide' ? 'bg-green-100 text-green-700' : 
+                              p.status === 'en_attente' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {p.status === 'en_attente' && <Clock size={10} className="animate-spin" />}
+                              {p.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            {p.status === 'en_attente' ? (
+                              <div className="flex justify-end gap-2">
+                                <button 
+                                  onClick={() => handleRejectPayment(p._id)}
+                                  className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                  title="Rejeter"
+                                >
+                                  <XCircle size={18} />
+                                </button>
+                                <button 
+                                  onClick={() => handleValidatePayment(p._id)}
+                                  className="bg-green-600 text-white p-2 rounded-xl shadow-lg hover:bg-green-700 transition-all transform active:scale-95"
+                                  title="Valider"
+                                >
+                                  <CheckCircle2 size={18} />
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-gray-300 italic font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                </tbody>
+              </table>
               </div>
             </div>
           )}
