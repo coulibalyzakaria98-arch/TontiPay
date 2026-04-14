@@ -27,12 +27,12 @@ const authService = {
   getCurrentUser: () => {
     try {
       const user = localStorage.getItem('user');
-      // On vérifie si user existe ET n'est pas la chaîne "undefined"
-      if (!user || user === "undefined") return null;
+      // Sécurité renforcée : check null, "undefined" ou vide
+      if (!user || user === "undefined" || user === "null") return null;
       return JSON.parse(user);
     } catch (error) {
       console.error("Erreur parsing user localStorage:", error);
-      localStorage.removeItem('user'); // Nettoyage si corrompu
+      localStorage.removeItem('user'); 
       return null;
     }
   },

@@ -4,7 +4,13 @@ import authService from '../services/authService';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => authService.getCurrentUser());
+  const [user, setUser] = useState(() => {
+    try {
+      return authService.getCurrentUser();
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(false);
 
   const login = async (credentials) => {
