@@ -12,7 +12,7 @@ import api from '../services/api';
 
 const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
   const [formData, setFormData] = useState({
-    amount: tontine?.montant || 0,
+    amount: '',
     method: 'orange',
     reference: '',
     transactionId: '',
@@ -21,6 +21,13 @@ const PaymentModal = ({ isOpen, onClose, tontine, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Sync amount when tontine changes
+  React.useEffect(() => {
+    if (tontine) {
+      setFormData(prev => ({ ...prev, amount: tontine.montant }));
+    }
+  }, [tontine]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

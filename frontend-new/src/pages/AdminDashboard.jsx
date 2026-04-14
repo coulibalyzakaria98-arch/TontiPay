@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   Users, 
   Wallet, 
@@ -16,8 +16,10 @@ import {
   ArrowRight
 } from 'lucide-react';
 import api from '../services/api';
+import { AuthContext } from '../context/AuthContext';
 
 const AdminDashboard = () => {
+  const { user: currentUser } = useContext(AuthContext);
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [tontines, setTontines] = useState([]);
@@ -33,13 +35,15 @@ const AdminDashboard = () => {
         api.get('/admin/stats'),
         api.get('/admin/users'),
         api.get('/admin/tontines'),
-        api.get('/payments') // This endpoint is already admin-protected in backend
+        api.get('/payments') // This endpoint returns all payments for admin
       ]);
       setStats(statsRes.data.data);
       setUsers(usersRes.data.data);
       setTontines(tontinesRes.data.data);
+      
+      const allPayments = paymentsRes.data.data || [];
       // Sort payments: pending first, then validated, then rejected
-      const sortedPayments = (paymentsRes.data.data || []).sort((a, b) => {
+      const sortedPayments = [...allPayments].sort((a, b) => {
         const statusOrder = { 'en_attente': 0, 'valide': 1, 'rejete': 2 };
         return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
       });
@@ -91,23 +95,28 @@ const AdminDashboard = () => {
   };
 
   const handleValidatePayment = async (paymentId) => {
-    if (!window.confirm("Valider ce paiement ?")) return;
+    if (!window.confirm("Valider ce paiement ? Cela générera un reçu PDF.")) return;
     try {
       await api.patch(`/payments/${paymentId}/validate`, { status: 'valide' });
-      fetchData(); // Refresh all data
-    } catch {
-      alert("Erreur lors de la validation");
+      alert("Paiement validé avec succès !");
+      fetchData(); // Refresh all data to see the update
+    } catch (err) {
+      alert(err.response?.data?.error || "Erreur lors de la validation");
     }
   };
 
   const handleRejectPayment = async (paymentId) => {
     const reason = window.prompt("Motif du rejet (obligatoire) :");
-    if (!reason) return;
+    if (!reason || reason.trim() === '') {
+        alert("Le motif est obligatoire pour rejeter un paiement.");
+        return;
+    }
     try {
       await api.patch(`/payments/${paymentId}/validate`, { status: 'rejete', reason });
-      fetchData(); // Refresh all data
-    } catch {
-      alert("Erreur lors du rejet");
+      alert("Paiement rejeté.");
+      fetchData(); 
+    } catch (err) {
+      alert(err.response?.data?.error || "Erreur lors du rejet");
     }
   };
 
@@ -151,21 +160,21 @@ const AdminDashboard = () => {
               <Users size={24} />
             </div>
             <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Utilisateurs</p>
-            <p className="text-3xl font-black text-gray-900">{stats?.userCount}</p>
+            <p className="text-3xl font-black text-gray-900">{stats?.userCount || 0}</p>
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 group hover:border-primary-200 transition-all">
             <div className="bg-green-50 text-green-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <TrendingUp size={24} />
             </div>
             <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Tontines Actives</p>
-            <p className="text-3xl font-black text-gray-900">{stats?.activeTontines} <span className="text-sm text-gray-300 font-normal">/ {stats?.tontineCount}</span></p>
+            <p className="text-3xl font-black text-gray-900">{stats?.activeTontines || 0} <span className="text-sm text-gray-300 font-normal">/ {stats?.tontineCount || 0}</span></p>
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 group hover:border-primary-200 transition-all">
             <div className="bg-amber-50 text-amber-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Wallet size={24} />
             </div>
             <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Flux Total</p>
-            <p className="text-3xl font-black text-gray-900">{stats?.totalVolume.toLocaleString()}</p>
+            <p className="text-3xl font-black text-gray-900">{(stats?.totalVolume || 0).toLocaleString()} <span className="text-xs">FCFA</span></p>
           </div>
           <div className="bg-primary-600 p-6 rounded-3xl shadow-xl text-white relative overflow-hidden">
             <Shield size={80} className="absolute -right-4 -bottom-4 text-white/10 rotate-12" />
@@ -383,16 +392,16 @@ const AdminDashboard = () => {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 text-xs">
-                                {p.user.prenom[0]}{p.user.nom[0]}
+                                {p.user?.prenom[0] || '?'}{p.user?.nom[0] || '?'}
                               </div>
                               <div>
-                                <p className="text-sm font-bold text-gray-900">{p.user.prenom} {p.user.nom}</p>
-                                <p className="text-[9px] text-gray-400 font-bold uppercase">{p.user.telephone}</p>
+                                <p className="text-sm font-bold text-gray-900">{p.user?.prenom || 'Utilisateur'} {p.user?.nom || 'Inconnu'}</p>
+                                <p className="text-[9px] text-gray-400 font-bold uppercase">{p.user?.telephone}</p>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <p className="text-sm font-black text-primary-600">{p.tontine.nom}</p>
+                            <p className="text-sm font-black text-primary-600">{p.tontine?.nom || 'Tontine Supprimée'}</p>
                             <p className="text-[10px] text-gray-400 font-medium italic">Tour n°{p.tour}</p>
                           </td>
                           <td className="px-6 py-4">
@@ -432,7 +441,12 @@ const AdminDashboard = () => {
                                 </button>
                               </div>
                             ) : (
-                              <p className="text-[10px] text-gray-300 italic font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
+                              <div className="text-right">
+                                <p className="text-[10px] text-gray-400 font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
+                                {p.status === 'rejete' && p.rejectionReason && (
+                                    <p className="text-[9px] text-red-400 italic">"{p.rejectionReason}"</p>
+                                )}
+                              </div>
                             )}
                           </td>
                         </tr>

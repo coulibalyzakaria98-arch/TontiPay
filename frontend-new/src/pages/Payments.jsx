@@ -180,7 +180,7 @@ const Payments = () => {
                           </button>
                       )}
 
-                      {p.status === 'rejete' && (
+                      {p.status === 'rejete' && p.rejectionReason && (
                           <div className="flex items-center gap-2 text-red-500 bg-red-50/50 px-3 py-2 rounded-xl border border-red-50">
                               <AlertCircle size={14} />
                               <p className="text-[10px] font-bold">{p.rejectionReason}</p>
