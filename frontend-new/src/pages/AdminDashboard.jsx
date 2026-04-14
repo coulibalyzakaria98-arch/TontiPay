@@ -31,17 +31,21 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, tontinesRes, paymentsRes] = await Promise.all([
+      const [statsRes, usersRes, tontinesRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/users'),
-        api.get('/admin/tontines'),
-        api.get('/payments') // This endpoint returns all payments for admin
+        api.get('/admin/tontines')
       ]);
       setStats(statsRes.data.data);
       setUsers(usersRes.data.data);
-      setTontines(tontinesRes.data.data);
+      const allTontines = tontinesRes.data.data || [];
+      setTontines(allTontines);
       
+      // For Admin, we still might want all payments across all tontines for global view
+      // but NVP suggests focus on creators. If global admin, we use /payments.
+      const paymentsRes = await api.get('/payments');
       const allPayments = paymentsRes.data.data || [];
+      
       // Sort payments: pending first, then approved, then rejected
       const sortedPayments = [...allPayments].sort((a, b) => {
         const statusOrder = { 'pending': 0, 'approved': 1, 'rejected': 2 };

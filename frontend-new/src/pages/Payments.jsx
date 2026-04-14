@@ -30,8 +30,8 @@ const Payments = () => {
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
-      // Utilisation du nouvel endpoint paginé
-      const response = await api.get(`/payments/my-history?page=${page}`);
+      // Utilisation du nouvel endpoint paginé NVP
+      const response = await api.get(`/payments/my?page=${page}`);
       setPayments(response.data.payments);
       setTotalPages(response.data.pages);
     } catch (error) {
