@@ -24,7 +24,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [tontines, setTontines] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [paymentFilter, setPaymentFilter] = useState('all'); // 'all', 'en_attente', 'valide', 'rejete'
+  const [paymentFilter, setPaymentFilter] = useState('all'); // 'all', 'pending', 'approved', 'rejected'
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'tontines' | 'payments'
 
@@ -42,9 +42,9 @@ const AdminDashboard = () => {
       setTontines(tontinesRes.data.data);
       
       const allPayments = paymentsRes.data.data || [];
-      // Sort payments: pending first, then validated, then rejected
+      // Sort payments: pending first, then approved, then rejected
       const sortedPayments = [...allPayments].sort((a, b) => {
-        const statusOrder = { 'en_attente': 0, 'valide': 1, 'rejete': 2 };
+        const statusOrder = { 'pending': 0, 'approved': 1, 'rejected': 2 };
         return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
       });
       setPayments(sortedPayments);
@@ -97,7 +97,7 @@ const AdminDashboard = () => {
   const handleValidatePayment = async (paymentId) => {
     if (!window.confirm("Valider ce paiement ? Cela générera un reçu PDF.")) return;
     try {
-      await api.patch(`/payments/${paymentId}/validate`, { status: 'valide' });
+      await api.patch(`/payments/${paymentId}/validate`, { status: 'approved' });
       alert("Paiement validé avec succès !");
       fetchData(); // Refresh all data to see the update
     } catch (err) {
@@ -112,7 +112,7 @@ const AdminDashboard = () => {
         return;
     }
     try {
-      await api.patch(`/payments/${paymentId}/validate`, { status: 'rejete', reason });
+      await api.patch(`/payments/${paymentId}/validate`, { status: 'rejected', reason });
       alert("Paiement rejeté.");
       fetchData(); 
     } catch (err) {
@@ -129,7 +129,7 @@ const AdminDashboard = () => {
   }
 
   // Compute pending payments count
-  const pendingPaymentsCount = payments.filter(p => p.status === 'en_attente').length;
+  const pendingPaymentsCount = payments.filter(p => p.status === 'pending').length;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -353,9 +353,9 @@ const AdminDashboard = () => {
               <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap gap-2">
                 {[
                   { id: 'all', label: 'Tous', count: payments.length },
-                  { id: 'en_attente', label: 'En attente', count: payments.filter(p => p.status === 'en_attente').length, color: 'amber' },
-                  { id: 'valide', label: 'Validés', count: payments.filter(p => p.status === 'valide').length, color: 'green' },
-                  { id: 'rejete', label: 'Rejetés', count: payments.filter(p => p.status === 'rejete').length, color: 'red' }
+                  { id: 'pending', label: 'En attente', count: payments.filter(p => p.status === 'pending').length, color: 'amber' },
+                  { id: 'approved', label: 'Validés', count: payments.filter(p => p.status === 'approved').length, color: 'green' },
+                  { id: 'rejected', label: 'Rejetés', count: payments.filter(p => p.status === 'rejected').length, color: 'red' }
                 ].map(filter => (
                   <button
                     key={filter.id}
@@ -415,15 +415,15 @@ const AdminDashboard = () => {
                           </td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1 rounded-full ${
-                              p.status === 'valide' ? 'bg-green-100 text-green-700' : 
-                              p.status === 'en_attente' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                              p.status === 'approved' ? 'bg-green-100 text-green-700' : 
+                              p.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                             }`}>
-                              {p.status === 'en_attente' && <Clock size={10} className="animate-spin" />}
-                              {p.status.toUpperCase()}
+                              {p.status === 'pending' && <Clock size={10} className="animate-spin" />}
+                              {p.status === 'pending' ? 'EN ATTENTE' : p.status === 'approved' ? 'APPROUVÉ' : 'REJETÉ'}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            {p.status === 'en_attente' ? (
+                            {p.status === 'pending' ? (
                               <div className="flex justify-end gap-2">
                                 <button 
                                   onClick={() => handleRejectPayment(p._id)}
@@ -443,7 +443,7 @@ const AdminDashboard = () => {
                             ) : (
                               <div className="text-right">
                                 <p className="text-[10px] text-gray-400 font-medium">Traité le {new Date(p.validatedAt || p.createdAt).toLocaleDateString()}</p>
-                                {p.status === 'rejete' && p.rejectionReason && (
+                                {p.status === 'rejected' && p.rejectionReason && (
                                     <p className="text-[9px] text-red-400 italic">"{p.rejectionReason}"</p>
                                 )}
                               </div>

@@ -18,12 +18,12 @@ const createPaymentSchema = z.object({
  * Schéma de validation admin
  */
 const validatePaymentSchema = z.object({
-  status: z.enum(['valide', 'rejete'], {
-    errorMap: () => ({ message: "Le statut doit être 'valide' ou 'rejete'" })
+  status: z.enum(['approved', 'rejected'], {
+    errorMap: () => ({ message: "Le statut doit être 'approved' ou 'rejected'" })
   }),
   reason: z.string().optional()
 }).refine((data) => {
-  if (data.status === 'rejete' && (!data.reason || data.reason.trim().length === 0)) {
+  if (data.status === 'rejected' && (!data.reason || data.reason.trim().length === 0)) {
     return false;
   }
   return true;

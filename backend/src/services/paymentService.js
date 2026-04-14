@@ -26,7 +26,7 @@ class PaymentService {
       transactionId: data.transactionId,
       screenshotUrl: data.screenshotUrl,
       tour: tontine.tourActuel,
-      status: 'en_attente'
+      status: 'pending'
     });
 
     // Notifier l'administrateur
@@ -34,6 +34,14 @@ class PaymentService {
       user: tontine.createur,
       message: `🔔 Nouveau paiement de ${payment.amount.toLocaleString()} FCFA à valider pour "${tontine.nom}".`,
       type: 'info'
+    });
+
+    // Log l'action
+    await AuditLog.create({
+      action: 'PAYMENT_SUBMITTED',
+      performedBy: userId,
+      resourceId: payment._id,
+      details: `Paiement soumis pour tontine ${tontine.nom}`
     });
 
     return payment;
@@ -56,7 +64,7 @@ class PaymentService {
       throw new Error("Non autorisé : Vous n'êtes pas l'administrateur de cette tontine");
     }
 
-    if (payment.status !== 'en_attente') {
+    if (payment.status !== 'pending') {
       throw new Error(`Ce paiement a déjà été traité (Statut actuel: ${payment.status})`);
     }
 
@@ -64,11 +72,12 @@ class PaymentService {
     payment.validatedAt = new Date();
     payment.validatedBy = adminId;
 
-    if (status === 'valide') {
-      // 1. Générer l'ID unique de reçu : PAY-2026-XXXX
+    if (status === 'approved') {
+      // 1. Générer l'ID unique de reçu : PAY-YEAR-SEQUENTIAL
       const year = new Date().getFullYear();
-      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-      payment.receiptId = `PAY-${year}-${random}`;
+      const count = await Payment.countDocuments({ status: 'approved', receiptId: { $regex: `^PAY-${year}` } });
+      const sequentialNum = (count + 1).toString().padStart(4, '0');
+      payment.receiptId = `PAY-${year}-${sequentialNum}`;
 
       // 2. Générer le PDF
       payment.receiptUrl = await generateReceipt(payment);
@@ -83,19 +92,19 @@ class PaymentService {
 
     // 4. Audit Trail
     await AuditLog.create({
-      action: status === 'valide' ? 'PAYMENT_APPROVED' : 'PAYMENT_REJECTED',
+      action: status === 'approved' ? 'PAYMENT_APPROVED' : 'PAYMENT_REJECTED',
       performedBy: adminId,
       resourceId: payment._id,
-      details: status === 'rejete' ? `Raison : ${reason}` : `Reçu ID : ${payment.receiptId}`
+      details: status === 'rejected' ? `Raison : ${reason}` : `Reçu ID : ${payment.receiptId}`
     });
 
     // 5. Notification Utilisateur
     await Notification.create({
       user: payment.user._id,
-      message: status === 'valide' 
+      message: status === 'approved' 
         ? `✅ Votre paiement pour "${payment.tontine.nom}" a été validé. Votre reçu est disponible.`
         : `❌ Votre paiement pour "${payment.tontine.nom}" a été rejeté. Motif : ${reason}`,
-      type: status === 'valide' ? 'payment_validated' : 'payment_rejected'
+      type: status === 'approved' ? 'payment_validated' : 'payment_rejected'
     });
 
     return payment;
@@ -130,14 +139,12 @@ class PaymentService {
     const tontine = await Tontine.findById(tontineId);
     if (!tontine) throw new Error('Tontine introuvable');
 
-    // Si l'utilisateur est l'admin de la tontine, on retourne tous les paiements.
     if (role === 'admin' || tontine.createur.toString() === userId) {
       return Payment.find({ tontine: tontineId })
         .populate('user', 'nom prenom telephone')
         .sort('-createdAt');
     }
 
-    // Les membres ne voient que leurs propres paiements dans cette tontine.
     return Payment.find({ tontine: tontineId, user: userId })
       .populate('user', 'nom prenom telephone')
       .sort('-createdAt');

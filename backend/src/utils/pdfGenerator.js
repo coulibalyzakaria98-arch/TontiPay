@@ -41,7 +41,7 @@ const generateReceipt = async (payment) => {
         ['Méthode', payment.method.toUpperCase()],
         ['Référence', payment.reference],
         ['Date', new Date(payment.createdAt).toLocaleDateString('fr-FR')],
-        ['Statut', 'VALIDÉ'],
+        ['Statut', 'APPROUVÉ'],
       ];
 
       doc.font('Helvetica').fontSize(10).fillColor('#4b5563');
@@ -54,7 +54,7 @@ const generateReceipt = async (payment) => {
       
       // --- Badge Validé ---
       doc.rect(doc.page.width - 110, doc.y, 80, 25).fill('#10b981');
-      doc.fillColor('#ffffff').fontSize(10).text('VALIDÉ', doc.page.width - 105, doc.y + 8, { width: 70, align: 'center' });
+      doc.fillColor('#ffffff').fontSize(10).text('APPROUVÉ', doc.page.width - 105, doc.y + 8, { width: 70, align: 'center' });
 
       // --- Footer ---
       const footerY = doc.page.height - 50;

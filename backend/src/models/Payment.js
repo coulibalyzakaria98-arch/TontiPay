@@ -38,8 +38,8 @@ const paymentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['en_attente', 'valide', 'rejete'],
-    default: 'en_attente',
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending',
   },
   rejectionReason: {
     type: String,
