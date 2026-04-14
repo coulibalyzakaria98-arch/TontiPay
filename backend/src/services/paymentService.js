@@ -81,14 +81,16 @@ class PaymentService {
 
       // 2. Générer le PDF
       payment.receiptUrl = await generateReceipt(payment);
-
-      // 3. Avancer le tour si nécessaire via le service tontine
-      await tontineService.checkAndAdvanceRound(payment.tontine._id);
     } else {
       payment.rejectionReason = reason;
     }
 
     await payment.save();
+
+    if (status === 'approved') {
+      // 3. Avancer le tour si nécessaire via le service tontine
+      await tontineService.checkAndAdvanceRound(payment.tontine._id);
+    }
 
     // 4. Audit Trail
     await AuditLog.create({
@@ -101,11 +103,26 @@ class PaymentService {
     // 5. Notification Utilisateur
     await Notification.create({
       user: payment.user._id,
-      message: status === 'approved' 
+      message: status === 'approved'
         ? `✅ Votre paiement pour "${payment.tontine.nom}" a été validé. Votre reçu est disponible.`
         : `❌ Votre paiement pour "${payment.tontine.nom}" a été rejeté. Motif : ${reason}`,
       type: status === 'approved' ? 'payment_validated' : 'payment_rejected'
     });
+
+    return payment;
+  }
+
+  async getReceipt(userId, paymentId, role) {
+    const payment = await Payment.findById(paymentId)
+      .populate('user', 'nom prenom telephone');
+
+    if (!payment || !payment.receiptUrl) {
+      throw new Error('Reçu introuvable.');
+    }
+
+    if (payment.user._id.toString() !== userId && role !== 'admin') {
+      throw new Error('Accès refusé.');
+    }
 
     return payment;
   }

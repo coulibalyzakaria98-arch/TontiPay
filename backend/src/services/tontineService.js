@@ -70,7 +70,7 @@ class TontineService {
     const validatedPaymentsCount = await Payment.countDocuments({
       tontine: tontineId,
       tour: tontine.tourActuel,
-      status: 'valide'
+      status: 'approved'
     });
 
     // Règle métier : n-1 paiements validés (tout le monde sauf le bénéficiaire)

@@ -31,14 +31,14 @@ exports.validatePayment = async (req, res) => {
   try {
     const validatedData = validatePaymentSchema.parse(req.body);
     const payment = await paymentService.validatePayment(
-      req.user.id, 
-      req.params.id, 
+      req.user.id,
+      req.params.id,
       validatedData
     );
 
     res.json({
       success: true,
-      message: `Paiement ${payment.status === 'valide' ? 'validé' : 'rejeté'} avec succès.`,
+      message: `Paiement ${payment.status === 'approved' ? 'validé' : 'rejeté'} avec succès.`,
       data: payment
     });
   } catch (error) {
@@ -54,17 +54,7 @@ exports.validatePayment = async (req, res) => {
  */
 exports.getReceipt = async (req, res) => {
   try {
-    const Payment = require('../models/Payment');
-    const payment = await Payment.findById(req.params.id);
-
-    if (!payment || !payment.receiptUrl) {
-      return res.status(404).json({ success: false, error: "Reçu introuvable." });
-    }
-
-    // Sécurité: Seul le proprio ou l'admin peut voir
-    if (payment.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, error: "Accès refusé." });
-    }
+    const payment = await paymentService.getReceipt(req.user.id, req.params.id, req.user.role);
 
     const filePath = path.join(__dirname, '../../', payment.receiptUrl);
     if (!fs.existsSync(filePath)) {
@@ -74,6 +64,12 @@ exports.getReceipt = async (req, res) => {
     res.contentType("application/pdf");
     res.sendFile(filePath);
   } catch (error) {
+    if (error.message === 'Reçu introuvable.') {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+    if (error.message === 'Accès refusé.') {
+      return res.status(403).json({ success: false, error: error.message });
+    }
     res.status(500).json({ success: false, error: error.message });
   }
 };

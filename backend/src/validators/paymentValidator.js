@@ -4,13 +4,18 @@ const { z } = require('zod');
  * Schéma de création de paiement
  */
 const createPaymentSchema = z.object({
-  tontineId: z.string().min(24, "ID Tontine invalide"),
-  amount: z.number().positive("Le montant doit être supérieur à 0"),
+  tontineId: z.string().regex(/^[0-9a-fA-F]{24}$/, "ID Tontine invalide"),
+  amount: z.preprocess((value) => {
+    if (typeof value === 'string' && value.trim() !== '') {
+      return Number(value);
+    }
+    return value;
+  }, z.number().positive("Le montant doit être supérieur à 0")),
   method: z.enum(['orange', 'mtn', 'moov'], {
     errorMap: () => ({ message: "Méthode de paiement non supportée" })
   }),
-  reference: z.string().min(3, "La référence de transaction est obligatoire"),
-  transactionId: z.string().min(3, "L'ID de transaction est obligatoire"),
+  reference: z.string().trim().min(3, "La référence de transaction est obligatoire"),
+  transactionId: z.string().trim().min(3, "L'ID de transaction est obligatoire"),
   screenshotUrl: z.string().url("URL de preuve invalide").optional(),
 });
 

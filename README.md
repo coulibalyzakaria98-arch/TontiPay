@@ -22,7 +22,7 @@ Plateforme moderne de gestion de tontines en ligne, sécurisée et automatisée.
 ```text
 TontiPay/
 ├── backend/      # API Node.js (Express & MongoDB)
-└── frontend/     # Application React (Vite & Tailwind)
+└── frontend-new/ # Application React (Vite & Tailwind)
 ```
 
 ## 🚀 Déploiement
@@ -39,7 +39,7 @@ TontiPay/
 ### Frontend (Vercel)
 1. Créez un **New Project**.
 2. Connectez votre repo GitHub.
-3. Définissez le **Root Directory** à `frontend`.
+3. Définissez le **Root Directory** à `frontend-new`.
 4. Vercel détectera automatiquement **Vite**.
 5. Variable d'env : `VITE_API_URL` (Lien de votre API Render).
 
