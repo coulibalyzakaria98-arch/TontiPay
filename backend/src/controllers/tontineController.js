@@ -7,6 +7,7 @@ const tontineService = require('../services/tontineService');
 // @access  Private
 exports.createTontine = async (req, res) => {
   try {
+    console.log('DEBUG: Creating tontine with payload:', req.body);
     const typeTirage = req.body.typeTirage;
     const normalizedTypeTirage =
       typeTirage === 'hasard' || typeTirage === 'hasard_pur'
