@@ -30,10 +30,9 @@ const Payments = () => {
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
-      // Utilisation du nouvel endpoint paginé NVP
       const response = await api.get(`/payments/my?page=${page}`);
-      setPayments(response.data.payments);
-      setTotalPages(response.data.pages);
+      setPayments(response.data.payments || []);
+      setTotalPages(response.data.pages || 1);
     } catch (error) {
       console.error("Erreur chargement paiements", error);
     } finally {
@@ -46,9 +45,7 @@ const Payments = () => {
       const response = await api.get('/tontines/my-tontines');
       const joinedTontines = response.data.data || [];
       setTontines(joinedTontines);
-      
       if (joinedTontines.length > 0) {
-        // Sélectionner la première tontine par défaut pour le paiement
         setSelectedTontine(joinedTontines[0]);
       }
     } catch (error) {
@@ -66,11 +63,9 @@ const Payments = () => {
     try {
       const token = localStorage.getItem('token');
       const url = `${import.meta.env.VITE_API_URL || 'https://tontipay.onrender.com/api'}/payments/${paymentId}/receipt`;
-      
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
       if (response.ok) {
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
@@ -97,6 +92,129 @@ const Payments = () => {
       default:
         return { icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', label: 'EN ATTENTE', border: 'border-amber-100' };
     }
+  };
+
+  // Helper component for payment card to keep main component clean
+  const PaymentCard = ({ p }) => {
+    const status = getStatusInfo(p.status);
+    return (
+      <div className={`bg-white rounded-3xl p-5 border ${status.border} shadow-sm space-y-4`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`${status.bg} ${status.color} p-3 rounded-2xl`}>
+              <status.icon size={24} />
+            </div>
+            <div>
+              <h3 className="font-black text-gray-900 leading-tight">{p.tontine?.nom}</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                {new Date(p.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="font-black text-gray-900">{p.amount.toLocaleString()} <span className="text-[10px]">FCFA</span></p>
+            <p className={`text-[9px] font-black uppercase ${status.color}`}>{status.label}</p>
+          </div>
+        </div>
+
+        <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="grid grid-cols-2 gap-4 md:flex md:gap-8">
+            <div>
+              <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Méthode</p>
+              <p className="text-xs font-bold text-gray-700 capitalize">{p.method}</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Référence</p>
+              <p className="text-xs font-mono font-bold text-gray-700">{p.reference}</p>
+            </div>
+          </div>
+
+          {p.status === 'approved' && p.receiptId && (
+            <button 
+              onClick={() => handleDownloadReceipt(p._id, p.receiptId)}
+              className="bg-primary-600 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-primary-700 transition-all"
+            >
+              <Download size={16} />
+              REÇU PDF
+            </button>
+          )}
+
+          {p.status === 'rejected' && p.rejectionReason && (
+            <div className="flex items-center gap-2 text-red-500 bg-red-50/50 px-3 py-2 rounded-xl border border-red-50">
+              <AlertCircle size={14} />
+              <p className="text-[10px] font-bold">{p.rejectionReason}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="animate-spin text-primary-500" size={40} />
+        </div>
+      );
+    }
+
+    if (payments.length > 0) {
+      return (
+        <div className="space-y-4">
+          {payments.map(p => <PaymentCard key={p._id} p={p} />)}
+          
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <button 
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+                className="p-2 rounded-xl bg-white border border-gray-200 disabled:opacity-30"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-sm font-black text-gray-600">Page {page} sur {totalPages}</span>
+              <button 
+                disabled={page === totalPages}
+                onClick={() => setPage(p => p + 1)}
+                className="p-2 rounded-xl bg-white border border-gray-200 disabled:opacity-30"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white p-12 rounded-[40px] text-center border-2 border-dashed border-gray-100 space-y-6">
+        <div>
+          <h3 className="text-lg font-black text-gray-900 mb-2">Aucune transaction enregistrée</h3>
+          <p className="text-gray-500 font-medium italic mb-2">Déclarez votre premier paiement pour participer à la tontine</p>
+        </div>
+        {tontines.length > 0 ? (
+          <button 
+            onClick={() => setIsPaymentModalOpen(true)}
+            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-2xl font-black text-sm inline-flex items-center gap-2 shadow-lg transition-all"
+          >
+            <Plus size={18} />
+            Déclarer un paiement
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-gray-400 text-sm font-medium">Vous devez d'abord rejoindre une tontine</p>
+            <Link 
+              to="/tontines" 
+              className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-2xl font-black text-sm inline-flex items-center gap-2 shadow-lg transition-all"
+            >
+              <ArrowRight size={18} />
+              Rejoindre une tontine
+            </Link>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -133,122 +251,7 @@ const Payments = () => {
       </header>
 
       <main className="max-w-3xl mx-auto p-6 space-y-6">
-        <div className="space-y-4">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="animate-spin text-primary-500" size={40} />
-            </div>
-          ) : (
-            <div className="w-full">
-              {payments.length > 0 ? (
-                <div className="space-y-4">
-                  {payments.map((p) => {
-                    const status = getStatusInfo(p.status);
-                    return (
-                      <div key={p._id} className={`bg-white rounded-3xl p-5 border ${status.border} shadow-sm space-y-4`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className={`${status.bg} ${status.color} p-3 rounded-2xl`}>
-                              <status.icon size={24} />
-                            </div>
-                            <div>
-                              <h3 className="font-black text-gray-900 leading-tight">{p.tontine?.nom}</h3>
-                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                {new Date(p.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-black text-gray-900">{p.amount.toLocaleString()} <span className="text-[10px]">FCFA</span></p>
-                            <p className={`text-[9px] font-black uppercase ${status.color}`}>{status.label}</p>
-                          </div>
-                        </div>
-
-                        <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="grid grid-cols-2 gap-4 md:flex md:gap-8">
-                              <div>
-                                  <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Méthode</p>
-                                  <p className="text-xs font-bold text-gray-700 capitalize">{p.method}</p>
-                              </div>
-                              <div>
-                                  <p className="text-[9px] text-gray-400 font-bold uppercase mb-1">Référence</p>
-                                  <p className="text-xs font-mono font-bold text-gray-700">{p.reference}</p>
-                              </div>
-                          </div>
-
-                          {p.status === 'approved' && p.receiptId && (
-                              <button 
-                                  onClick={() => handleDownloadReceipt(p._id, p.receiptId)}
-                                  className="bg-primary-600 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-primary-700 transition-all"
-                              >
-                                  <Download size={16} />
-                                  REÇU PDF
-                              </button>
-                          )}
-
-                          {p.status === 'rejected' && p.rejectionReason && (
-                              <div className="flex items-center gap-2 text-red-500 bg-red-50/50 px-3 py-2 rounded-xl border border-red-50">
-                                  <AlertCircle size={14} />
-                                  <p className="text-[10px] font-bold">{p.rejectionReason}</p>
-                              </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Pagination Controls */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-4 mt-8">
-                      <button 
-                        disabled={page === 1}
-                        onClick={() => setPage(p => p - 1)}
-                        className="p-2 rounded-xl bg-white border border-gray-200 disabled:opacity-30"
-                      >
-                        <ChevronLeft size={20} />
-                      </button>
-                      <span className="text-sm font-black text-gray-600">Page {page} sur {totalPages}</span>
-                      <button 
-                        disabled={page === totalPages}
-                        onClick={() => setPage(p => p + 1)}
-                        className="p-2 rounded-xl bg-white border border-gray-200 disabled:opacity-30"
-                      >
-                        <ChevronRight size={20} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-white p-12 rounded-[40px] text-center border-2 border-dashed border-gray-100 space-y-6">
-                    <div>
-                      <h3 className="text-lg font-black text-gray-900 mb-2">Aucune transaction enregistrée</h3>
-                      <p className="text-gray-500 font-medium italic mb-2">Déclarez votre premier paiement pour participer à la tontine</p>
-                    </div>
-                    {tontines.length > 0 ? (
-                      <button 
-                        onClick={() => setIsPaymentModalOpen(true)}
-                        className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-2xl font-black text-sm inline-flex items-center gap-2 shadow-lg transition-all"
-                      >
-                        <Plus size={18} />
-                        Déclarer un paiement
-                      </button>
-                    ) : (
-                      <div className="space-y-2">
-                        <p className="text-gray-400 text-sm font-medium">Vous devez d'abord rejoindre une tontine</p>
-                        <Link 
-                          to="/tontines" 
-                          className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-2xl font-black text-sm inline-flex items-center gap-2 shadow-lg transition-all"
-                        >
-                          <ArrowRight size={18} />
-                          Rejoindre une tontine
-                        </Link>
-                      </div>
-                    )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {renderContent()}
       </main>
     </div>
   );

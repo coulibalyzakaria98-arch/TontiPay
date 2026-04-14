@@ -35,8 +35,14 @@ const CreateTontine = () => {
     setLoading(true);
     setError('');
 
+    const payload = {
+      ...formData,
+      montant: Number(formData.montant),
+      nombreMembres: Number(formData.nombreMembres)
+    };
+
     try {
-      const res = await api.post('/tontines', formData);
+      const res = await api.post('/tontines', payload);
       if (res.data.success) {
         navigate(`/tontines/${res.data.data._id}`);
       }
