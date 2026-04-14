@@ -11,7 +11,7 @@ const createPaymentSchema = z.object({
     }
     return value;
   }, z.number().positive("Le montant doit être supérieur à 0")),
-  method: z.enum(['orange', 'mtn', 'moov'], {
+  method: z.enum(['orange', 'mtn', 'moov', 'physique'], {
     errorMap: () => ({ message: "Méthode de paiement non supportée" })
   }),
   reference: z.string().trim().min(3, "La référence de transaction est obligatoire"),

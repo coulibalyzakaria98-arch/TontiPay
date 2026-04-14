@@ -18,7 +18,7 @@ const paymentSchema = new mongoose.Schema({
   },
   method: {
     type: String,
-    enum: ['orange', 'mtn', 'moov'],
+    enum: ['orange', 'mtn', 'moov', 'physique'],
     required: true,
   },
   reference: {
