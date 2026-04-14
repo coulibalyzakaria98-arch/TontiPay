@@ -2,6 +2,7 @@ const Payment = require('../models/Payment');
 const AuditLog = require('../models/AuditLog');
 const Notification = require('../models/Notification');
 const Tontine = require('../models/Tontine');
+const Membre = require('../models/Membre');
 const tontineService = require('./tontineService');
 const { generateReceipt } = require('../utils/pdfGenerator');
 
@@ -12,6 +13,10 @@ class PaymentService {
   async createPayment(userId, data) {
     const tontine = await Tontine.findById(data.tontineId);
     if (!tontine) throw new Error("Tontine non trouvée");
+
+    // 🔥 VÉRIFICATION FINTECH : L'utilisateur doit être membre de la tontine
+    const membership = await Membre.findOne({ userId, tontineId: data.tontineId });
+    if (!membership) throw new Error("Accès refusé : Vous n'êtes pas membre de cette tontine");
 
     // Vérifier si la référence est unique
     const existing = await Payment.findOne({ reference: data.reference });
@@ -36,7 +41,7 @@ class PaymentService {
       type: 'info'
     });
 
-    // Log l'action
+    // Log l'action (Audit Trail)
     await AuditLog.create({
       action: 'PAYMENT_SUBMITTED',
       performedBy: userId,
@@ -59,7 +64,7 @@ class PaymentService {
 
     if (!payment) throw new Error("Paiement introuvable");
 
-    // Sécurité: Seul le créateur de la tontine peut valider
+    // 🔥 VÉRIFICATION FINTECH : Seul le créateur de la tontine peut valider
     if (payment.tontine.createur.toString() !== adminId) {
       throw new Error("Non autorisé : Vous n'êtes pas l'administrateur de cette tontine");
     }
@@ -82,6 +87,7 @@ class PaymentService {
       // 2. Générer le PDF
       payment.receiptUrl = await generateReceipt(payment);
     } else {
+      if (!reason || reason.trim() === '') throw new Error("Motif de rejet obligatoire");
       payment.rejectionReason = reason;
     }
 
@@ -92,7 +98,7 @@ class PaymentService {
       await tontineService.checkAndAdvanceRound(payment.tontine._id);
     }
 
-    // 4. Audit Trail
+    // 4. Audit Trail (Log Pro)
     await AuditLog.create({
       action: status === 'approved' ? 'PAYMENT_APPROVED' : 'PAYMENT_REJECTED',
       performedBy: adminId,
