@@ -44,12 +44,16 @@ const Payments = () => {
   const fetchTontines = useCallback(async () => {
     try {
       const response = await api.get('/tontines/my-tontines');
-      setTontines(response.data.data || []);
-      if (response.data.data && response.data.data.length > 0) {
-        setSelectedTontine(response.data.data[0]);
+      const joinedTontines = response.data.data || [];
+      setTontines(joinedTontines);
+      
+      if (joinedTontines.length > 0) {
+        // Sélectionner la première tontine par défaut pour le paiement
+        setSelectedTontine(joinedTontines[0]);
       }
     } catch (error) {
       console.error("Erreur chargement tontines", error);
+      setTontines([]);
     }
   }, []);
 
