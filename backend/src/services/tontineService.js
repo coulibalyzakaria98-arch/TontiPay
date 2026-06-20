@@ -75,6 +75,16 @@ class TontineService {
 
     // Règle métier : n-1 paiements validés (tout le monde sauf le bénéficiaire)
     if (validatedPaymentsCount >= tontine.nombreMembres - 1) {
+      // Mettre à jour aRecu pour le bénéficiaire du tour actuel
+      const currentBeneficiary = await Membre.findOne({ 
+        tontineId: tontine._id, 
+        position: tontine.tourActuel 
+      });
+      if (currentBeneficiary) {
+        currentBeneficiary.aRecu = true;
+        await currentBeneficiary.save();
+      }
+
       if (tontine.tourActuel < tontine.nombreMembres) {
         tontine.tourActuel += 1;
         await tontine.save();

@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -15,12 +16,12 @@ import './App.css';
 
 function App() {
   const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isNavbarHidden = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/';
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {!isAuthPage && <Navbar />}
-      <main className={`flex-1 w-full ${!isAuthPage ? 'md:pb-0 pb-20' : ''}`}>
+      {!isNavbarHidden && <Navbar />}
+      <main className={`flex-1 w-full ${!isNavbarHidden ? 'md:pb-0 pb-20' : ''}`}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -67,7 +68,8 @@ function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/" element={
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>

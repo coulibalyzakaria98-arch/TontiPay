@@ -70,7 +70,7 @@ const initCronJobs = () => {
             user: member.userId,
             tontine: tontine._id,
             tour: tontine.tourActuel,
-            status: 'valide'
+            status: 'approved'
           });
 
           if (!hasPaid) {
